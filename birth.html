@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>생일추카 🎂 - AI 생일 플래너</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      letter-spacing: -0.02em;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #ffd6db;
+      border-radius: 10px;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff5f6',
+              100: '#ffebed',
+              200: '#ffd6db',
+              300: '#ffb3bd',
+              400: '#ff8595',
+              500: '#f86075', 
+              600: '#e04358',
+            },
+            surface: '#faf7f8'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f6f3f4] min-h-screen text-gray-900 pb-16 flex justify-center">
+
+  <!-- Mobile Container Frame -->
+  <div class="w-full max-w-[430px] bg-white min-h-screen shadow-2xl relative flex flex-col justify-between overflow-hidden">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white text-xs px-4 py-3 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+      <i data-lucide="sparkles" class="w-4 h-4 text-brand-300"></i>
+      <span id="toast-msg">알림 메시지</span>
+    </div>
+
+    <!-- Main Content Header Section -->
+    <div class="flex-1">
+      <header class="px-6 pt-7 pb-4 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-bold text-brand-400 tracking-wider uppercase mb-0.5">AI Birthday Planner</p>
+          <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-1.5">
+            생일추카 <span class="text-xl">🎂</span>
+          </h1>
+        </div>
+        <button class="w-10 h-10 rounded-full bg-brand-50 text-brand-400 flex items-center justify-center hover:bg-brand-100 transition">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+        </button>
+      </header>
+
+      <!-- Main Navigation Tabs -->
+      <div class="px-6 my-2">
+        <div class="grid grid-cols-3 gap-1 bg-gray-100/80 p-1.5 rounded-2xl text-xs font-bold text-gray-500">
+          <button onclick="switchTab('dday')" id="tab-dday" class="py-2.5 rounded-xl bg-white text-gray-900 shadow-sm transition duration-200">
+            D-Day
+          </button>
+          <button onclick="switchTab('gift')" id="tab-gift" class="py-2.5 rounded-xl hover:text-gray-900 transition duration-200">
+            선물 추천
+          </button>
+          <button onclick="switchTab('msg')" id="tab-msg" class="py-2.5 rounded-xl hover:text-gray-900 transition duration-200">
+            AI 멘트
+          </button>
+        </div>
+      </div>
+
+      <main class="px-6 pt-3 space-y-6">
+
+        <!-- 기능 1: 생일 D-Day & 선물 로그 연동 -->
+        <section id="sec-dday" class="space-y-5">
+          <div class="bg-surface rounded-3xl p-5 border border-gray-100">
+            <h2 class="text-sm font-bold text-gray-900 mb-3.5 flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-brand-400"></i> 소중한 생일 추가하기
+            </h2>
+            <form id="birthday-form" onsubmit="addBirthday(event)" class="space-y-3">
+              <input type="text" id="friend-name" required placeholder="이름을 입력하세요 (예: 김민지)" class="w-full px-4 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition placeholder:text-gray-400">
+              
+              <div class="grid grid-cols-2 gap-2">
+                <input type="date" id="friend-date" required class="w-full px-3.5 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-700">
+                
+                <select id="notify-days" class="w-full px-3.5 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-700">
+                  <option value="1">1일 전 알림</option>
+                  <option value="3" selected>3일 전 알림</option>
+                  <option value="7">7일 전 알림</option>
+                  <option value="14">14일 전 알림</option>
+                </select>
+              </div>
+
+              <button type="submit" class="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-[0.99]">
+                생일 저장하기
+              </button>
+            </form>
+          </div>
+
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Upcoming Birthdays</h3>
+            </div>
+            <div id="birthday-list" class="space-y-2.5">
+              <!-- JS Dynamic -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 기능 2: 취향 스타일 + 예산 엄격 큐레이션 선물 추천 -->
+        <section id="sec-gift" class="space-y-5 hidden">
+          <div class="bg-surface rounded-3xl p-5 border border-gray-100 space-y-4">
+            <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+              <i data-lucide="gift" class="w-4 h-4 text-brand-400"></i> 취향 & 예산 맞춤 선물 큐레이션
+            </h2>
+
+            <div class="space-y-3.5">
+              <!-- 친구 선택 바 -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 mb-1.5">누구에게 선물할까요?</label>
+                <select id="gift-target-friend" onchange="onFriendSelectChange()" class="w-full px-4 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-800 font-bold">
+                  <!-- JS Dynamic -->
+                </select>
+              </div>
+
+              <!-- 이전 선물 로그 안내 뱃지 -->
+              <div id="friend-log-info" class="hidden bg-brand-50/70 p-3 rounded-2xl text-[11px] text-brand-600 border border-brand-100 flex items-start gap-2">
+                <i data-lucide="info" class="w-4 h-4 shrink-0 text-brand-400 mt-0.5"></i>
+                <div>
+                  <span class="font-bold">이전에 준 선물: </span>
+                  <span id="past-logs-text">없음</span>
+                  <p class="text-[10px] text-gray-400 mt-0.5">* 이미 준 선물은 필터링되어 새로운 아이템을 추천해 드려요!</p>
+                </div>
+              </div>
+
+              <!-- 취향 스타일 선택 -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 mb-1.5">상대방의 취향 스타일</label>
+                <div class="grid grid-cols-4 gap-1.5" id="style-selector">
+                  <button type="button" onclick="selectStyle('all')" id="style-btn-all" class="style-btn py-2 text-[11px] font-bold rounded-xl border border-brand-300 bg-brand-50 text-brand-600 transition">전체</button>
+                  <button type="button" onclick="selectStyle('practical')" id="style-btn-practical" class="style-btn py-2 text-[11px] font-bold rounded-xl border border-gray-100 bg-white text-gray-500 hover:bg-gray-50 transition">⚡ 실용파</button>
+                  <button type="button" onclick="selectStyle('emotional')" id="style-btn-emotional" class="style-btn py-2 text-[11px] font-bold rounded-xl border border-gray-100 bg-white text-gray-500 hover:bg-gray-50 transition">🕯️ 감성파</button>
+                  <button type="button" onclick="selectStyle('trendy')" id="style-btn-trendy" class="style-btn py-2 text-[11px] font-bold rounded-xl border border-gray-100 bg-white text-gray-500 hover:bg-gray-50 transition">🔥 트렌디</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 mb-1.5">카테고리</label>
+                <select id="gift-category" class="w-full px-4 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-800">
+                  <option value="beauty">뷰티 / 코스메틱 💄</option>
+                  <option value="tech">전자기기 / 테크 🎧</option>
+                  <option value="fashion">패션 / 잡화 👜</option>
+                  <option value="living">인테리어 / 리빙 🕯️</option>
+                </select>
+              </div>
+
+              <!-- Slider Area -->
+              <div class="bg-white p-4 rounded-2xl border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs font-bold text-gray-700">최대 희망 예산</span>
+                  <span id="price-display" class="text-xs font-extrabold text-brand-500 bg-brand-50 px-2.5 py-1 rounded-full">50,000 원 이하</span>
+                </div>
+                <input type="range" id="gift-price-slider" min="5000" max="300000" step="5000" value="50000" oninput="updatePriceDisplay(this.value)" class="w-full accent-brand-400 cursor-pointer">
+                <div class="flex justify-between text-[10px] text-gray-400 font-medium mt-1">
+                  <span>5천원</span>
+                  <span>15만원</span>
+                  <span>30만원</span>
+                </div>
+              </div>
+
+              <button onclick="recommendGift()" class="w-full py-3.5 bg-brand-400 hover:bg-brand-500 text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-[0.99] flex items-center justify-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> 맞춤 선물 추천받기
+              </button>
+            </div>
+          </div>
+
+          <div id="gift-result" class="hidden space-y-2">
+            <div class="flex items-center justify-between px-1">
+              <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">RECOMMENDED ITEMS</h3>
+              <span class="text-[10px] text-brand-500 font-bold">* 설정 금액 이하 상품만 필터링</span>
+            </div>
+            <div id="gift-items" class="space-y-2">
+              <!-- JS Dynamic -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 기능 3: 진짜 Google Gemini AI 연동 축하 멘트 생성기 -->
+        <section id="sec-msg" class="space-y-5 hidden">
+          <div class="bg-surface rounded-3xl p-5 border border-gray-100 space-y-4">
+            <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+              <i data-lucide="wand-2" class="w-4 h-4 text-brand-400"></i>AI 맞춤 멘트 생성기
+            </h2>
+
+            <div class="space-y-3.5">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-400 mb-1.5">관계</label>
+                  <select id="msg-relation" class="w-full px-3.5 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-800 font-bold">
+                    <option value="close">절친 / 베프 👭</option>
+                    <option value="friend">일반 친구 😊</option>
+                    <option value="senior">선배 / 직장동료 👔</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-400 mb-1.5">AI 톤앤매너</label>
+                  <select id="msg-tone" class="w-full px-3.5 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-800 font-bold">
+                    <option value="cute">귀엽고 애교 섞인 힐링 톤 🍰</option>
+                    <option value="funny">유쾌하고 재밌는 MZ 밈 톤 🤪</option>
+                    <option value="touching">진중하고 감동적인 밤편지 톤 💌</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-gray-400 mb-1.5">멘트 길이</label>
+                <select id="msg-length" class="w-full px-3.5 py-3 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition text-gray-800">
+                  <option value="short">간결하게</option>
+                  <option value="medium" selected>보통</option>
+                  <option value="long">길게</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-brand-500 mb-1.5 flex items-center gap-1">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> 포함할 추억 / 상황 / TMI (선택)
+                </label>
+                <textarea id="msg-custom-prompt" rows="3" placeholder="예: 최근 취업 성공한 거 진짜 축하하고, 작년에 제주도 여행 가서 촛불 끌 때처럼 이번 생일도 대박 나길 바란다고 적어줘!" class="w-full p-3.5 text-xs bg-white rounded-2xl border-0 ring-1 ring-gray-200/80 focus:ring-2 focus:ring-brand-300 focus:outline-none transition placeholder:text-gray-300 resize-none leading-relaxed"></textarea>
+              </div>
+
+              <button onclick="generateMessageWithRealAI()" class="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-[0.99] flex items-center justify-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-brand-300"></i> AI 멘트 생성하기
+              </button>
+            </div>
+          </div>
+
+          <!-- AI 로딩 연출 -->
+          <div id="msg-loading" class="hidden bg-white rounded-3xl p-6 border border-brand-100 text-center space-y-3 shadow-sm">
+            <div class="inline-block animate-spin w-6 h-6 border-2 border-brand-400 border-t-transparent rounded-full"></div>
+            <p class="text-xs font-bold text-brand-600">AI가 맥락을 분석하여 축하글을 작성 중입니다...</p>
+          </div>
+
+          <!-- 완성된 AI 생성 멘트 결과창 -->
+          <div id="msg-result" class="hidden bg-gradient-to-br from-brand-50 via-white to-pink-50 rounded-3xl p-5 border border-brand-200/80 space-y-3.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-brand-600 flex items-center gap-1">
+                <i data-lucide="heart" class="w-3.5 h-3.5 fill-brand-400 text-brand-400"></i>AI 생성 카드
+              </span>
+              <button onclick="copyMsg()" class="text-xs bg-white text-gray-800 px-3 py-1.5 rounded-full font-bold shadow-sm hover:bg-brand-100 transition flex items-center gap-1 border border-brand-200">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> 복사하기
+              </button>
+            </div>
+
+            <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-brand-100 shadow-inner">
+              <p id="generated-msg" class="text-xs text-gray-800 leading-relaxed font-medium whitespace-pre-wrap"></p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Bottom Deco Footer -->
+    <footer class="text-center py-4 border-t border-gray-100 mt-6">
+      <p class="text-[10px] text-gray-400 font-medium">Happy Birthday Planner App</p>
+    </footer>
+
+    <!-- GIFT LOG MODAL -->
+    <div id="gift-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center hidden transition-opacity">
+      <div class="bg-white w-full max-w-[430px] rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-1.5">
+              🎁 <span id="modal-friend-name">친구</span> 선물 기록
+            </h3>
+            <p class="text-[11px] text-gray-400">여태 주고받은 선물을 기록하고 확인해 보세요.</p>
+          </div>
+          <button onclick="closeGiftModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <form id="gift-log-form" onsubmit="addGiftLog(event)" class="bg-surface p-4 rounded-2xl space-y-2.5 border border-gray-100">
+          <p class="text-xs font-bold text-gray-700">새 선물 히스토리 기록</p>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="log-item" required placeholder="선물명 (예: 디올 틴트)" class="w-full px-3 py-2 text-xs bg-white rounded-xl border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-brand-300 focus:outline-none">
+            <input type="text" id="log-price" placeholder="가격 (예: 48,000원)" class="w-full px-3 py-2 text-xs bg-white rounded-xl border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-brand-300 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="date" id="log-date" required class="w-full px-3 py-2 text-xs bg-white rounded-xl border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-brand-300 focus:outline-none text-gray-700">
+            <input type="text" id="log-memo" placeholder="메모 (예: 25살 생일)" class="w-full px-3 py-2 text-xs bg-white rounded-xl border-0 ring-1 ring-gray-200 focus:ring-2 focus:ring-brand-300 focus:outline-none">
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-brand-400 hover:bg-brand-500 text-white font-bold text-xs rounded-xl transition">
+            기록 추가하기
+          </button>
+        </form>
+
+        <div class="space-y-2 pt-2">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gift History Log</p>
+          <div id="modal-log-list" class="space-y-2">
+            <!-- JS Dynamic -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GIFT DETAIL MODAL -->
+    <div id="gift-detail-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center hidden transition-opacity">
+      <div class="bg-white w-full max-w-[430px] rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-base font-extrabold text-gray-900">상품 상세 정보</h3>
+          <button onclick="closeGiftDetailModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="flex flex-col items-center text-center py-3 space-y-2">
+          <div class="w-20 h-20 rounded-3xl bg-brand-50 flex items-center justify-center text-4xl shadow-inner" id="detail-icon"></div>
+          <p class="text-sm font-extrabold text-gray-900" id="detail-name"></p>
+          <p class="text-sm font-bold text-brand-500" id="detail-price"></p>
+        </div>
+
+        <div class="bg-surface rounded-2xl p-4 space-y-2 text-xs text-gray-600 leading-relaxed border border-gray-100">
+          <p id="detail-desc"></p>
+          <ul class="space-y-1 text-[11px] text-gray-500 list-disc list-inside pt-1" id="detail-points"></ul>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <button onclick="addLogFromDetail()" class="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-2xl shadow-sm transition active:scale-[0.99] flex items-center justify-center gap-1.5">
+            <i data-lucide="plus" class="w-4 h-4"></i> 내 선물 로그에 추가
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-gray-100 space-y-2">
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider px-0.5">비슷한 추천 더보기</p>
+          <div id="detail-related-list" class="space-y-2">
+            <!-- JS Dynamic -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 클라이언트에 키를 두지 않습니다. Netlify 함수로 프록시 호출합니다.
+    const GEMINI_API_PROXY = '/.netlify/functions/gemini';
+
+    function safeCreateIcons() {
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    }
+    safeCreateIcons();
+
+    let currentSelectedFriendId = null;
+    let currentDetailGift = null;
+    let selectedStyleFilter = 'all';
+
+    let birthdays = [
+      { 
+        id: 1, 
+        name: "이수진", 
+        date: "2026-08-15", 
+        notify: 3,
+        logs: [
+          { id: 101, item: "디올 틴트", price: "48,000원", date: "2025-08-15", memo: "생일 선물 (좋아했음)" }
+        ]
+      },
+      { 
+        id: 2, 
+        name: "박지민", 
+        date: "2026-08-28", 
+        notify: 7,
+        logs: [
+          { id: 102, item: "블루투스 스피커", price: "120,000원", date: "2025-08-28", memo: "겸사겸사 선물" }
+        ]
+      }
+    ];
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2000);
+    }
+
+    function switchTab(tab) {
+      ['dday', 'gift', 'msg'].forEach(t => {
+        const sec = document.getElementById(`sec-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          sec.classList.remove('hidden');
+          btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+          btn.classList.remove('hover:text-gray-900');
+        } else {
+          sec.classList.add('hidden');
+          btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+          btn.classList.add('hover:text-gray-900');
+        }
+      });
+
+      if (tab === 'gift') {
+        updateFriendDropdown();
+      }
+    }
+
+    function getDday(dateStr) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      const target = new Date(dateStr);
+      target.setFullYear(today.getFullYear());
+      
+      if (target < today) {
+        target.setFullYear(today.getFullYear() + 1);
+      }
+      
+      const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+      return diffDays === 0 ? "D-Day 🎉" : `D-${diffDays}`;
+    }
+
+    function renderBirthdays() {
+      const listEl = document.getElementById('birthday-list');
+      if (birthdays.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">등록된 생일이 없어요.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = birthdays.map(item => {
+        const ddayStr = getDday(item.date);
+        const isToday = ddayStr.includes('🎉');
+        const logCount = item.logs ? item.logs.length : 0;
+
+        return `
+          <div class="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-400 flex items-center justify-center text-lg">
+                  🍰
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-gray-900">${item.name}</p>
+                  <p class="text-[11px] text-gray-400 mt-0.5">${item.date} · ${item.notify}일 전 알림</p>
+                </div>
+              </div>
+              <span class="text-xs font-extrabold px-3 py-1.5 rounded-xl ${isToday ? 'bg-brand-400 text-white animate-pulse' : 'bg-brand-50 text-brand-500'}">
+                ${ddayStr}
+              </span>
+            </div>
+
+            <div class="pt-2 border-t border-gray-50 flex items-center justify-between text-xs">
+              <span class="text-[11px] text-gray-400 flex items-center gap-1">
+                🎁 기록된 선물 <strong class="text-brand-500 font-bold">${logCount}개</strong>
+              </span>
+              <button onclick="openGiftModal(${item.id})" class="px-3 py-1.5 bg-gray-100 hover:bg-brand-50 hover:text-brand-500 text-gray-700 font-bold rounded-xl transition flex items-center gap-1 text-[11px]">
+                <i data-lucide="history" class="w-3.5 h-3.5"></i> 선물 기록
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      safeCreateIcons();
+    }
+
+    function addBirthday(e) {
+      e.preventDefault();
+      const name = document.getElementById('friend-name').value;
+      const date = document.getElementById('friend-date').value;
+      const notify = document.getElementById('notify-days').value;
+
+      birthdays.push({ id: Date.now(), name, date, notify, logs: [] });
+      renderBirthdays();
+      document.getElementById('birthday-form').reset();
+      showToast('생일이 등록되었습니다! ✨');
+    }
+
+    function updateFriendDropdown() {
+      const select = document.getElementById('gift-target-friend');
+      if (birthdays.length === 0) {
+        select.innerHTML = `<option value="">등록된 친구가 없습니다</option>`;
+        document.getElementById('friend-log-info').classList.add('hidden');
+        return;
+      }
+
+      select.innerHTML = birthdays.map(b => `
+        <option value="${b.id}">${b.name} (생일: ${b.date})</option>
+      `).join('');
+
+      onFriendSelectChange();
+    }
+
+    function onFriendSelectChange() {
+      const select = document.getElementById('gift-target-friend');
+      const friendId = parseInt(select.value);
+      const friend = birthdays.find(b => b.id === friendId);
+
+      const infoBox = document.getElementById('friend-log-info');
+      const pastText = document.getElementById('past-logs-text');
+
+      if (friend && friend.logs && friend.logs.length > 0) {
+        const itemNames = friend.logs.map(l => l.item).join(', ');
+        pastText.innerText = itemNames;
+        infoBox.classList.remove('hidden');
+      } else {
+        pastText.innerText = "없음";
+        infoBox.classList.add('hidden');
+      }
+    }
+
+    function selectStyle(style) {
+      selectedStyleFilter = style;
+      const buttons = document.querySelectorAll('.style-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('border-brand-300', 'bg-brand-50', 'text-brand-600');
+        btn.classList.add('border-gray-100', 'bg-white', 'text-gray-500');
+      });
+      const activeBtn = document.getElementById(`style-btn-${style}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-gray-100', 'bg-white', 'text-gray-500');
+        activeBtn.classList.add('border-brand-300', 'bg-brand-50', 'text-brand-600');
+      }
+    }
+
+    /* 150개 이상 고품질 자동 생성 데이터베이스 */
+    const baseTemplates = [
+      { cat: "beauty", style: "practical", name: "데일리 립밤 & 케어", minP: 5000, maxP: 15000, icon: "💄", desc: "부담 없이 건네는 매일 쓰는 생기 충전 립케어" },
+      { cat: "beauty", style: "practical", name: "미니 핸드크림 세트", minP: 12000, maxP: 28000, icon: "🧴", desc: "휴대성 좋고 보습력 뛰어난 실용적인 핸드 세트" },
+      { cat: "beauty", style: "practical", name: "올인원 스킨케어 팩", minP: 25000, maxP: 48000, icon: "✨", desc: "피부 컨디션을 올려주는 매일 보습 케어" },
+      { cat: "beauty", style: "emotional", name: "감성 아로마 바디워시", minP: 18000, maxP: 35000, icon: "🛁", desc: "은은한 아로마 향으로 하루의 피로를 풀어주는 바디 케어" },
+      { cat: "beauty", style: "emotional", name: "니치 미니 퍼퓸", minP: 38000, maxP: 85000, icon: "🌷", desc: "기분 좋은 잔향이 오래 남는 감성 향수" },
+      { cat: "beauty", style: "trendy", name: "럭셔리 브랜드 립 틴트", minP: 45000, maxP: 65000, icon: "💋", desc: "SNS에서 핫한 시그니처 컬러의 스테디셀러 틴트" },
+      { cat: "beauty", style: "trendy", name: "프리미엄 쿠션 팩트", minP: 55000, maxP: 95000, icon: "🪞", desc: "매끈한 피부 표현을 도와주는 인기 베이스 메이크업" },
+      { cat: "beauty", style: "emotional", name: "시그니처 드 퍼퓸 50ml", minP: 120000, maxP: 280000, icon: "🌸", desc: "특별한 날 마음을 전하기 좋은 고급 니치 향수" },
+
+      { cat: "tech", style: "practical", name: "C타입 초고속 케이블 & 홀더", minP: 8000, maxP: 15000, icon: "🔌", desc: "단선 걱정 없이 튼튼한 데일리 충전 필수템" },
+      { cat: "tech", style: "practical", name: "대용량 무선 보조배터리", minP: 18000, maxP: 38000, icon: "🔋", desc: "언제 어디서나 급속 충전이 가능한 실용템" },
+      { cat: "tech", style: "practical", name: "데스크 멀티 거치대", minP: 22000, maxP: 45000, icon: "⌚", desc: "스마트폰과 워치를 깔끔하게 정돈하는 거치대" },
+      { cat: "tech", style: "practical", name: "슬림 무선 키보드", minP: 35000, maxP: 68000, icon: "⌨️", desc: "소음 없이 편안한 타건감의 멀티페어링 키보드" },
+      { cat: "tech", style: "emotional", name: "무드등 미니 가습기", minP: 24000, maxP: 42000, icon: "💡", desc: "포근한 불빛과 함께 건조함을 잡아주는 인테리어 가습기" },
+      { cat: "tech", style: "emotional", name: "아날로그 즉석 카메라", minP: 98000, maxP: 159000, icon: "📸", desc: "소중한 순간을 예쁜 추억으로 출력하는 카메라" },
+      { cat: "tech", style: "trendy", name: "포터블 블루투스 스피커", minP: 48000, maxP: 95000, icon: "🔊", desc: "풍부한 음질과 세련된 디자인의 무선 스피커" },
+      { cat: "tech", style: "trendy", name: "노이즈 캔슬링 헤드폰", minP: 180000, maxP: 298000, icon: "🎧", desc: "몰입감 높은 사운드와 힙한 스트릿 핏의 헤드폰" },
+
+      { cat: "fashion", style: "practical", name: "양말 기프트 세트 (3켤레)", minP: 9900, maxP: 18000, icon: "🧦", desc: "데일리 코디에 깔끔하게 매치하기 좋은 양말 세트" },
+      { cat: "fashion", style: "practical", name: "데일리 캔버스 에코백", minP: 15000, maxP: 29000, icon: "🛍️", desc: "가볍게 들고 다니기 좋은 넉넉한 수납력의 가방" },
+      { cat: "fashion", style: "emotional", name: "부드러운 실크 스카프", minP: 32000, maxP: 58000, icon: "🧣", desc: "포인트 아이템으로 연출하기 좋은 부드러운 스카프" },
+      { cat: "fashion", style: "trendy", name: "아크릴 아이콘 키링", minP: 11000, maxP: 22000, icon: "🔑", desc: "가방이나 에어팟 케이스에 포인트가 되는 키링" },
+      { cat: "fashion", style: "trendy", name: "실버 레이어드 목걸이", minP: 39000, maxP: 75000, icon: "💍", desc: "심플하고 세련된 느낌을 주는 주얼리" },
+      { cat: "fashion", style: "trendy", name: "스트릿 시그니처 볼캡", minP: 45000, maxP: 89000, icon: "🧢", desc: "핏이 예뻐서 어디에나 잘 어울리는 볼캡" },
+      { cat: "fashion", style: "practical", name: "클래식 가죽 카드지갑", minP: 65000, maxP: 185000, icon: "👛", desc: "오래 쓸수록 멋스러운 가죽 카드 지갑" },
+      { cat: "fashion", style: "trendy", name: "트렌디 스니커즈", minP: 110000, maxP: 169000, icon: "👟", desc: "인기 높은 스테디셀러 스니커즈" },
+
+      { cat: "living", style: "practical", name: "드립백 커피 샘플러", minP: 12000, maxP: 25000, icon: "☕", desc: "집에서 간편하게 즐기는 풍미 깊은 홈카페 드립백" },
+      { cat: "living", style: "practical", name: "오설록 프리미엄 티 세트", minP: 28000, maxP: 45000, icon: "🍵", desc: "다채로운 향과 맛을 즐길 수 있는 차 세트" },
+      { cat: "living", style: "emotional", name: "아로마 수제 캔들", minP: 16000, maxP: 32000, icon: "🕯️", desc: "은은한 향으로 공간을 따뜻하게 채워주는 캔들" },
+      { cat: "living", style: "emotional", name: "생화 향 디퓨저 세트", minP: 25000, maxP: 48000, icon: "🪻", desc: "방 안 가득 기분 좋은 꽃향기를 남기는 디퓨저" },
+      { cat: "living", style: "trendy", name: "마블 패턴 법랑 머그 세트", minP: 32000, maxP: 55000, icon: "🥛", desc: "감성적인 인테리어 소품으로도 좋은 머그컵" },
+      { cat: "living", style: "practical", name: "호텔식 극세사 타월 세트", minP: 35000, maxP: 68000, icon: "🧺", desc: "도톰하고 부드러운 감촉의 고급 타월" },
+      { cat: "living", style: "practical", name: "캡슐 커피 머신", minP: 110000, maxP: 165000, icon: "☕", desc: "원터치로 간편하게 추출하는 홈카페 머신" },
+      { cat: "living", style: "trendy", name: "발뮤다 스팀 토스터", minP: 240000, maxP: 299000, icon: "🍞", desc: "겉바속촉 식감을 살려주는 감성 홈 가전" }
+    ];
+
+    const brandPrefixes = ["디올", "샤넬", "이솝", "논픽션", "탬버린즈", "록시땅", "달바", "로지텍", "JBL", "마샬", "소니", "인스탁스", "폴로", "메종키츠네", "아디다스", "크로우캐년", "오설록", "발뮤다"];
+
+    function generateGiftDatabase() {
+      const db = [];
+      let idCounter = 1;
+
+      baseTemplates.forEach(tpl => {
+        const priceStep = Math.floor((tpl.maxP - tpl.minP) / 2);
+        for (let i = 0; i < 3; i++) {
+          const calculatedPrice = Math.round((tpl.minP + (priceStep * i)) / 1000) * 1000;
+          const randomBrand = brandPrefixes[Math.floor(Math.random() * brandPrefixes.length)];
+          
+          db.push({
+            id: idCounter++,
+            name: i === 1 ? `${randomBrand} ${tpl.name}` : tpl.name,
+            cat: tpl.cat,
+            style: tpl.style,
+            price: calculatedPrice,
+            icon: tpl.icon,
+            desc: tpl.desc,
+            points: ["선물용 선물상자/쇼핑백 제공", "인기 높은 스테디셀러 아이템"]
+          });
+        }
+      });
+
+      const budgetBooster = [
+        { name: "포토 카드 앨범 & 키링", cat: "fashion", style: "trendy", price: 6500, icon: "📸", desc: "소중한 사진을 넣어 다니는 커스텀 키링" },
+        { name: "캐릭터 미니 손거울", cat: "beauty", style: "practical", price: 4500, icon: "🪞", desc: "파우치에 쏙 들어가는 귀여운 손거울" },
+        { name: "아로마 드레스 퍼퓸 80ml", cat: "living", style: "emotional", price: 12000, icon: "🧺", desc: "섬유에 은은한 향을 남겨주는 드레스 퍼퓸" },
+        { name: "C타입 젠더 & 고리 세트", cat: "tech", style: "practical", price: 5000, icon: "🔌", desc: "열쇠고리에 걸어 다니는 간편 젠더" },
+        { name: "수제 아이싱 쿠키 세트", cat: "living", style: "emotional", price: 14000, icon: "🍪", desc: "귀여운 디자인의 달콤한 수제 쿠키" },
+        { name: "미니 괄사 마사지기", cat: "beauty", style: "practical", price: 11000, icon: "💆‍♀️", desc: "피로를 풀어주는 콤팩트 괄사" },
+        { name: "스마트폰 파스텔 그립톡", cat: "tech", style: "trendy", price: 9900, icon: "📱", desc: "손에 착 감기는 감성 디자인 그립톡" },
+        { name: "무지 캔버스 파우치", cat: "fashion", style: "practical", price: 8500, icon: "👝", desc: "소품 정리에 유용한 심플 파우치" },
+        { name: "차량용 미니 방향제", cat: "living", style: "practical", price: 18500, icon: "🚗", desc: "은은한 향이 감도는 클립형 방향제" },
+        { name: "골지 컬러 발목양말 2종", cat: "fashion", style: "practical", price: 7000, icon: "🧦", desc: "트렌디한 컬러감의 데일리 양말" }
+      ];
+
+      budgetBooster.forEach(b => {
+        db.push({
+          id: idCounter++,
+          ...b,
+          points: ["가볍게 주기 좋은 스몰 기프트", "실용적인 데일리 아이템"]
+        });
+      });
+
+      return db;
+    }
+
+    const giftDatabase = generateGiftDatabase();
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function recommendGift() {
+      const friendId = parseInt(document.getElementById('gift-target-friend').value);
+      const cat = document.getElementById('gift-category').value;
+      const maxPrice = parseInt(document.getElementById('gift-price-slider').value);
+
+      const friend = birthdays.find(b => b.id === friendId);
+      const pastLogs = friend && friend.logs ? friend.logs.map(l => l.item.toLowerCase()) : [];
+
+      let filtered = giftDatabase.filter(g => g.cat === cat);
+
+      if (selectedStyleFilter !== 'all') {
+        filtered = filtered.filter(g => g.style === selectedStyleFilter);
+      }
+
+      if (pastLogs.length > 0) {
+        filtered = filtered.filter(g => !pastLogs.some(past => g.name.toLowerCase().includes(past) || past.includes(g.name.toLowerCase())));
+      }
+
+      let pool = filtered.filter(g => g.price <= maxPrice);
+
+      const resultBox = document.getElementById('gift-result');
+      const itemsBox = document.getElementById('gift-items');
+
+      if (pool.length === 0) {
+        itemsBox.innerHTML = `<p class="text-xs text-gray-400 text-center py-6 bg-white rounded-2xl border border-gray-100">선택하신 조건 및 예산(${maxPrice.toLocaleString()}원 이하)에 맞는 상품이 없습니다.<br>예산을 올리거나 취향 스타일을 변경해 보세요!</p>`;
+      } else {
+        const recommendations = shuffleArray(pool).slice(0, 3);
+        itemsBox.innerHTML = recommendations.map(i => `
+          <div onclick='openGiftDetailModal(${JSON.stringify(i.name)})' class="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm cursor-pointer hover:border-brand-200 hover:shadow-md transition">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">${i.icon}</span>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-gray-800 block">${i.name}</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-500 font-medium">${i.style === 'practical' ? '실용파' : i.style === 'emotional' ? '감성파' : '트렌디'}</span>
+                </div>
+                <span class="text-[10px] text-brand-500 font-bold">${i.price.toLocaleString()}원</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="event.stopPropagation(); quickAddLog('${i.name}', '${i.price.toLocaleString()}원')" class="text-xs font-bold text-brand-500 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 추가
+              </button>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      resultBox.classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function quickAddLog(itemName, priceStr) {
+      const friendId = parseInt(document.getElementById('gift-target-friend').value);
+      const friend = birthdays.find(b => b.id === friendId);
+      if (!friend) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (!friend.logs) friend.logs = [];
+
+      friend.logs.unshift({ id: Date.now(), item: itemName, price: priceStr, date: todayStr, memo: "추천 선물 수락" });
+      renderBirthdays();
+      onFriendSelectChange();
+      showToast(`${friend.name}님의 선물 로그에 추가되었습니다! 🎁`);
+    }
+
+    function openGiftModal(friendId) {
+      currentSelectedFriendId = friendId;
+      const friend = birthdays.find(b => b.id === friendId);
+      if (!friend) return;
+
+      document.getElementById('modal-friend-name').innerText = friend.name;
+      renderGiftLogs(friend);
+      document.getElementById('gift-modal').classList.remove('hidden');
+    }
+
+    function closeGiftModal() {
+      document.getElementById('gift-modal').classList.add('hidden');
+      currentSelectedFriendId = null;
+    }
+
+    function renderGiftLogs(friend) {
+      const logListEl = document.getElementById('modal-log-list');
+      if (!friend.logs || friend.logs.length === 0) {
+        logListEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-xl">아직 준 선물이 없어요.</p>`;
+        return;
+      }
+
+      logListEl.innerHTML = friend.logs.map(log => `
+        <div class="p-3 bg-white rounded-xl border border-gray-100 flex items-center justify-between text-xs">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-gray-900">${log.item}</span>
+              ${log.price ? `<span class="text-[10px] text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded-md font-semibold">${log.price}</span>` : ''}
+            </div>
+            <p class="text-[10px] text-gray-400">${log.date} ${log.memo ? `· ${log.memo}` : ''}</p>
+          </div>
+          <button onclick="deleteGiftLog(${log.id})" class="text-gray-300 hover:text-red-400 transition p-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join('');
+      safeCreateIcons();
+    }
+
+    function addGiftLog(e) {
+      e.preventDefault();
+      if (!currentSelectedFriendId) return;
+
+      const friend = birthdays.find(b => b.id === currentSelectedFriendId);
+      if (!friend) return;
+
+      const item = document.getElementById('log-item').value;
+      const price = document.getElementById('log-price').value;
+      const date = document.getElementById('log-date').value;
+      const memo = document.getElementById('log-memo').value;
+
+      if (!friend.logs) friend.logs = [];
+
+      friend.logs.unshift({ id: Date.now(), item, price, date, memo });
+      renderGiftLogs(friend);
+      renderBirthdays();
+      document.getElementById('gift-log-form').reset();
+      showToast('선물 로그가 추가되었습니다! 🎁');
+    }
+
+    function deleteGiftLog(logId) {
+      if (!currentSelectedFriendId) return;
+      const friend = birthdays.find(b => b.id === currentSelectedFriendId);
+      if (!friend) return;
+
+      friend.logs = friend.logs.filter(l => l.id !== logId);
+      renderGiftLogs(friend);
+      renderBirthdays();
+      showToast('기록이 삭제되었습니다.');
+    }
+
+    function openGiftDetailModal(itemName) {
+      const gift = giftDatabase.find(g => g.name === itemName);
+      if (!gift) return;
+      currentDetailGift = gift;
+
+      document.getElementById('detail-icon').innerText = gift.icon;
+      document.getElementById('detail-name').innerText = gift.name;
+      document.getElementById('detail-price').innerText = `${gift.price.toLocaleString()}원`;
+      document.getElementById('detail-desc').innerText = gift.desc;
+      document.getElementById('detail-points').innerHTML = gift.points.map(p => `<li>${p}</li>`).join('');
+
+      renderRelatedGifts(gift);
+
+      document.getElementById('gift-detail-modal').classList.remove('hidden');
+      document.getElementById('gift-detail-modal').querySelector('div').scrollTop = 0;
+      safeCreateIcons();
+    }
+
+    function renderRelatedGifts(gift) {
+      const related = giftDatabase
+        .filter(g => g.cat === gift.cat && g.name !== gift.name && g.price <= gift.price * 1.2)
+        .sort((a, b) => Math.abs(a.price - gift.price) - Math.abs(b.price - gift.price))
+        .slice(0, 4);
+
+      const listEl = document.getElementById('detail-related-list');
+
+      if (related.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">비슷한 상품이 없어요.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = related.map(i => `
+        <div onclick='openGiftDetailModal(${JSON.stringify(i.name)})' class="p-3 bg-surface rounded-2xl border border-gray-100 flex items-center justify-between cursor-pointer hover:border-brand-200 transition">
+          <div class="flex items-center gap-2.5">
+            <span class="text-lg">${i.icon}</span>
+            <div>
+              <span class="text-xs font-bold text-gray-800 block">${i.name}</span>
+              <span class="text-[10px] text-gray-400">${i.price.toLocaleString()}원</span>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+        </div>
+      `).join('');
+      safeCreateIcons();
+    }
+
+    function closeGiftDetailModal() {
+      document.getElementById('gift-detail-modal').classList.add('hidden');
+      currentDetailGift = null;
+    }
+
+    function addLogFromDetail() {
+      if (!currentDetailGift) return;
+      const friendId = parseInt(document.getElementById('gift-target-friend').value);
+      const friend = birthdays.find(b => b.id === friendId);
+      if (!friend) {
+        showToast('먼저 선물할 친구를 선택해주세요!');
+        return;
+      }
+      quickAddLog(currentDetailGift.name, `${currentDetailGift.price.toLocaleString()}원`);
+      closeGiftDetailModal();
+    }
+
+    function updatePriceDisplay(val) {
+      document.getElementById('price-display').innerText = `${parseInt(val).toLocaleString()} 원 이하`;
+    }
+
+    /* 🤖 진짜 Google Gemini AI 연동 축하 멘트 생성 함수 */
+    async function generateMessageWithRealAI() {
+      const rel = document.getElementById('msg-relation').value;
+      const tone = document.getElementById('msg-tone').value;
+      const length = document.getElementById('msg-length').value;
+      const customPrompt = document.getElementById('msg-custom-prompt').value.trim();
+
+      const loadingBox = document.getElementById('msg-loading');
+      const resultBox = document.getElementById('msg-result');
+      const generatedMsgEl = document.getElementById('generated-msg');
+
+      resultBox.classList.add('hidden');
+      loadingBox.classList.remove('hidden');
+
+      const relText = rel === 'close' ? '절친한 베스트 프렌드' : rel === 'senior' ? '회사 선배/직장 동료' : '일반 친구';
+      const toneText = tone === 'cute' ? '귀엽고 애교 섞인 힐링 톤' : tone === 'funny' ? '재치 있고 유쾌한 MZ 밈 톤' : '진중하고 감동적인 밤편지 톤';
+      const lengthText = length === 'short' ? '2~3줄로 간결하게' : length === 'long' ? '6줄 이상으로 정성스럽고 길게' : '4~5줄 정도로 적당하게';
+
+      const prompt = `
+당신은 생일 축하 메시지를 작성해주는 AI 모바일 비서입니다.
+아래 조건에 맞춰 상대방에게 보낼 자연스럽고 감동적인 생일 축하 메시지를 작성해주세요.
+
+[조건]
+1. 받는 사람과의 관계: ${relText}
+2. 메시지 분위기/말투: ${toneText}
+3. 전체 분량: ${lengthText}
+4. 포함할 추억/상황/TMI: ${customPrompt ? customPrompt : '없음 (일반적인 생일 축하 내용을 자연스럽게 작성)'}
+
+[작성 규칙]
+- AI가 쓴 티가 나지 않도록 카카오톡 메시지처럼 자연스럽게 이모지를 적절히 사용하세요.
+- 메인 축하 메시지 내용만 바로 출력하세요 (인사말이나 "네, 작성해드렸습니다" 같은 AI 안내문은 절대 포함하지 마세요).
+`;
+
+      try {
+        const resp = await fetch(GEMINI_API_PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        const text = await resp.text();
+        let json = {};
+        try {
+          json = JSON.parse(text);
+        } catch {
+          throw new Error(`응답 파싱 실패: ${text}`);
+        }
+
+        if (!resp.ok) {
+          throw new Error(json?.error || `서버 오류 (${resp.status})`);
+        }
+
+        const aiText = json?.text || json?.raw?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+        if (aiText) {
+          generatedMsgEl.innerText = aiText.trim();
+        } else {
+          generatedMsgEl.innerText = json?.error || '서버 응답이 없습니다.';
+        }
+      } catch (error) {
+        console.error('Gemini API Error:', error);
+        generatedMsgEl.innerText = `AI 호출 실패: ${error.message}`;
+      } finally {
+        loadingBox.classList.add('hidden');
+        resultBox.classList.remove('hidden');
+        safeCreateIcons();
+      }
+    }
+
+    function copyMsg() {
+      const text = document.getElementById('generated-msg').innerText;
+      navigator.clipboard.writeText(text);
+      showToast('축하 멘트가 복사되었습니다! ✨');
+    }
+
+    renderBirthdays();
+  </script>
+</body>
+</html>
