@@ -21,9 +21,10 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 💡 gemini-1.5-flash는 단종되어 더 이상 호출되지 않음 -> gemini-2.5-flash로 변경
+    // 💡 gemini-1.5-flash(단종) -> gemini-2.5-flash(신규 사용자 접근 제한) -> gemini-flash-latest로 변경
+    // latest 별칭은 그 시점에 신규 사용자도 쓸 수 있는 최신 Flash 모델을 자동으로 가리켜줌
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
