@@ -21,9 +21,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    // ✨ gemini-1.5-flash 대신 최신 지원 표준 모델인 gemini-2.0-flash로 변경했습니다!
+    // 💡 gemini-1.5-flash 호환 엔드포인트로 변경
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
