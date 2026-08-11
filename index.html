@@ -217,14 +217,24 @@
                     <input type="range" id="gift-price-slider" min="10000" max="300000" step="5000" value="50000" oninput="updatePriceDisplay(this.value)" class="w-full accent-brand-400 cursor-pointer">
                   </div>
 
-                  <button onclick="recommendGift()" class="w-full py-2.5 bg-brand-400 text-white font-bold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1">
+                  <button onclick="recommendGift()" class="w-full py-2.5 bg-brand-400 hover:bg-brand-500 text-white font-bold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1 transition">
                     <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 맞춤 선물 추천받기
                   </button>
                 </div>
               </div>
 
+              <!-- 추천 검색 로딩 상태 -->
+              <div id="gift-loading" class="hidden bg-white rounded-2xl p-4 border border-brand-100 text-center space-y-2 shadow-sm">
+                <div class="inline-block animate-spin w-5 h-5 border-2 border-brand-400 border-t-transparent rounded-full"></div>
+                <p class="text-[11px] font-bold text-brand-600">AI가 실제 Google 검색 기반 추천 상품을 찾는 중입니다...</p>
+              </div>
+
+              <!-- 추천 결과 목록 -->
               <div id="gift-result" class="hidden space-y-1.5">
-                <h3 class="text-[10px] font-bold text-gray-400">RECOMMENDED ITEMS</h3>
+                <div class="flex items-center justify-between">
+                  <h3 class="text-[10px] font-bold text-gray-400">RECOMMENDED ITEMS</h3>
+                  <span id="gift-engine-tag" class="text-[9px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md">Google 검색 AI 엔진</span>
+                </div>
                 <div id="gift-items" class="space-y-1.5">
                   <!-- JS Dynamic -->
                 </div>
@@ -238,7 +248,6 @@
                   <i data-lucide="wand-2" class="w-3.5 h-3.5 text-brand-400"></i> AI 맞춤 멘트 생성기
                 </h2>
                 <div class="space-y-2">
-                  <!-- 관계, 말투, 톤앤매너 3개 선택 영역 -->
                   <div class="grid grid-cols-3 gap-1">
                     <div>
                       <label class="block text-[9px] font-bold text-gray-400 mb-1">관계</label>
@@ -441,7 +450,6 @@
 
       if (stepNum === 1) {
         document.getElementById('lock-screen').classList.remove('opacity-0', 'pointer-events-none');
-        // 잠금화면으로 전환 시 AI 결과창 숨기기 및 초기화
         document.getElementById('msg-result').classList.add('hidden');
         document.getElementById('generated-msg').innerText = '';
       } else {
@@ -456,7 +464,6 @@
         } else if (stepNum === 4) {
           switchTab('msg', 4);
           document.getElementById('msg-custom-prompt').value = "첫 직장 화이팅 하라고 해줘!";
-          // 4단계 진입 시 이전 결과창을 숨겨서 깨끗하게 유지
           document.getElementById('msg-result').classList.add('hidden');
           document.getElementById('generated-msg').innerText = '';
         }
@@ -468,7 +475,6 @@
     }
 
     function resetDemo() {
-      // 초기화 버튼 클릭 시 결과창 및 입력 필드 초기화
       document.getElementById('msg-result').classList.add('hidden');
       document.getElementById('generated-msg').innerText = '';
       document.getElementById('msg-custom-prompt').value = '';
@@ -591,31 +597,171 @@
       }
     }
 
+    /* 🎁 확장된 자체 큐레이션 선물 데이터베이스 (뷰티, 테크, 패션 모두 포함) */
     const giftDatabase = [
-      { name: "디올 틴트", cat: "beauty", price: 48000, icon: "💋" },
-      { name: "립밤 기프트 세트", cat: "beauty", price: 15000, icon: "💄" },
-      { name: "블루투스 스피커", cat: "tech", price: 55000, icon: "🔊" }
-    ];
+      // 뷰티 / 코스메틱 (beauty)
+      { name: "샤넬 루쥬 코코 밤", cat: "beauty", price: 48000, icon: "💄" },
+      { name: "디올 어딕트 립 글로우", cat: "beauty", price: 48000, icon: "💋" },
+      { name: "이솝 핸드크림 75ml", cat: "beauty", price: 39000, icon: "🧴" },
+      { name: "논픽션 핸드케어 세트", cat: "beauty", price: 25000, icon: "✨" },
+      { name: "탬버린즈 쉘 핑거 핸드크림", cat: "beauty", price: 32000, icon: "🌸" },
+      { name: "딥티크 퍼퓸드 핸드워시", cat: "beauty", price: 82000, icon: "🧼" },
+      { name: "바이레도 헤어 미스트", cat: "beauty", price: 92000, icon: "🍃" },
 
-    function recommendGift() {
-      const itemsBox = document.getElementById('gift-items');
-      document.getElementById('gift-result').classList.remove('hidden');
-      itemsBox.innerHTML = giftDatabase.map(i => `
-        <div class="p-2.5 bg-white rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-2">
-            <span class="text-base">${i.icon}</span>
-            <div>
-              <span class="text-[11px] font-bold text-gray-800 block">${i.name}</span>
-              <span class="text-[9px] text-gray-400">약 ${i.price.toLocaleString()}원</span>
-            </div>
-          </div>
-          <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-lg">추천!</span>
-        </div>
-      `).join('');
-    }
+      // 전자기기 / 테크 (tech)
+      { name: "샤오미 보조배터리 20000mAh", cat: "tech", price: 28000, icon: "🔋" },
+      { name: "JBL GO 3 블루투스 스피커", cat: "tech", price: 49000, icon: "🔊" },
+      { name: "카카오프렌즈 무선 충전기", cat: "tech", price: 35000, icon: "⚡" },
+      { name: "마샬 윌로우 블루투스 스피커", cat: "tech", price: 159000, icon: "🎵" },
+      { name: "소니 WH-CH520 무선 헤드폰", cat: "tech", price: 89000, icon: "🎧" },
+      { name: "로지텍 MX Keys Mini 키보드", cat: "tech", price: 129000, icon: "⌨️" },
+
+      // 패션 / 잡화 (fashion)
+      { name: "아위(AHWE) 머플러", cat: "fashion", price: 45000, icon: "🧣" },
+      { name: "마르디 메크르디 카드 지갑", cat: "fashion", price: 58000, icon: "👛" },
+      { name: "폴로 라프 로렌 볼캡", cat: "fashion", price: 79000, icon: "🧢" },
+      { name: "킨토 트래블 텀블러 500ml", cat: "fashion", price: 38000, icon: "☕" },
+      { name: "아크네 스튜디오 볼드 카드홀더", cat: "fashion", price: 180000, icon: "💳" },
+      { name: "스노우 피크 캠핑 텀블러", cat: "fashion", price: 42000, icon: "🏕️" }
+    ];
 
     function updatePriceDisplay(val) {
       document.getElementById('price-display').innerText = `${parseInt(val).toLocaleString()} 원`;
+    }
+
+    /* 🎁 AI 우선 추천 + 로컬 DB 폴백 통합 선물 추천 함수 */
+    async function recommendGift() {
+      const select = document.getElementById('gift-target-friend');
+      const friendId = parseInt(select.value);
+      const friend = birthdays.find(b => b.id === friendId);
+
+      const catVal = document.getElementById('gift-category').value;
+      const maxPrice = parseInt(document.getElementById('gift-price-slider').value);
+
+      const pastLogs = (friend && friend.logs && friend.logs.length > 0) 
+        ? friend.logs.map(l => l.item).join(', ') 
+        : '없음';
+
+      const catMap = {
+        beauty: "뷰티 / 코스메틱",
+        tech: "전자기기 / 테크",
+        fashion: "패션 / 잡화"
+      };
+
+      const friendName = friend ? friend.name : "친구";
+
+      const loadingBox = document.getElementById('gift-loading');
+      const resultBox = document.getElementById('gift-result');
+      const itemsBox = document.getElementById('gift-items');
+      const engineTag = document.getElementById('gift-engine-tag');
+
+      resultBox.classList.add('hidden');
+      loadingBox.classList.remove('hidden');
+
+      // AI에 전달할 큐레이션 프롬프트 (JSON 반환 지침)
+      const prompt = `
+당신은 한국의 20대 인기 생일 선물 데이터를 잘 아는 쇼핑 큐레이터입니다.
+다음 조건에 딱 맞는 생일 선물 아이템 3가지를 추천해 주세요.
+
+[선물 조건]
+1. 받는 사람: ${friendName}
+2. 카테고리: ${catMap[catVal] || '뷰티'}
+3. 희망 예산 범위: 약 ${maxPrice.toLocaleString()}원 이하 (예산에 맞춰 실현 가능한 상품)
+4. 이전에 이미 선물해서 제외할 항목: ${pastLogs}
+
+[작성 지침]
+- Google 검색에서 실제로 구매 가능한 실존 인기 브랜드 상품 위주로 3개를 선정하세요.
+- 각 상품의 명칭, 예상 가격, 아이콘 이모지(1개)를 아래와 같은 순수 JSON 배열 형식으로만 출력하세요. 다른 안내 문구는 절대 넣지 마세요.
+
+JSON 예시:
+[
+  {"name": "샤넬 루쥬 코코 밤", "price": 48000, "icon": "💄"},
+  {"name": "이솝 핸드크림", "price": 39000, "icon": "🧴"},
+  {"name": "디올 립글로우", "price": 48000, "icon": "💋"}
+]
+`;
+
+      let aiSuccess = false;
+
+      try {
+        const resp = await fetch(GEMINI_API_PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, grounding: true })
+        });
+
+        const text = await resp.text();
+        let json = {};
+        try { json = JSON.parse(text); } catch { }
+
+        if (resp.ok && json.text) {
+          // JSON 배열 응답 추출
+          const match = json.text.match(/\[[\s\S]*\]/);
+          if (match) {
+            const items = JSON.parse(match[0]);
+            if (Array.isArray(items) && items.length > 0) {
+              engineTag.innerText = "Google 검색 AI 엔진";
+              engineTag.className = "text-[9px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md";
+
+              itemsBox.innerHTML = items.map(i => `
+                <div class="p-2.5 bg-white rounded-xl border border-gray-100 flex items-center justify-between shadow-sm hover:border-brand-200 transition">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">${i.icon || '🎁'}</span>
+                    <div>
+                      <span class="text-[11px] font-bold text-gray-800 block">${i.name}</span>
+                      <span class="text-[9px] text-gray-400">약 ${parseInt(i.price).toLocaleString()}원</span>
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-lg">AI 추천</span>
+                </div>
+              `).join('');
+
+              aiSuccess = true;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("AI 선물 추천 실패 -> 자체 큐레이션 DB로 폴백:", err);
+      } finally {
+        loadingBox.classList.add('hidden');
+      }
+
+      // AI 실패 시 또는 예외 발생 시 자체 정제 DB(폴백) 활용
+      if (!aiSuccess) {
+        engineTag.innerText = "자체 큐레이션 Engine";
+        engineTag.className = "text-[9px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md";
+
+        // 입력된 예산 + 선택된 카테고리 기반 필터링
+        let filtered = giftDatabase.filter(item => {
+          const matchCat = item.cat === catVal;
+          const matchPrice = item.price <= maxPrice + 20000; // 예산 약간 오차 범위까지 허용
+          const notPast = pastLogs === '없음' || !pastLogs.includes(item.name);
+          return matchCat && matchPrice && notPast;
+        });
+
+        // 조건 만족 항목이 적으면 해당 카테고리 전체에서 정렬 후 추출
+        if (filtered.length === 0) {
+          filtered = giftDatabase.filter(item => item.cat === catVal);
+        }
+
+        const displayItems = filtered.slice(0, 3);
+
+        itemsBox.innerHTML = displayItems.map(i => `
+          <div class="p-2.5 bg-white rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-base">${i.icon}</span>
+              <div>
+                <span class="text-[11px] font-bold text-gray-800 block">${i.name}</span>
+                <span class="text-[9px] text-gray-400">약 ${i.price.toLocaleString()}원</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-lg">추천!</span>
+          </div>
+        `).join('');
+      }
+
+      resultBox.classList.remove('hidden');
+      safeCreateIcons();
     }
 
     /* 🤖 평범한 톤 & 존댓말/반말 옵션이 완벽 반영된 AI 멘트 생성 함수 */

@@ -22,6 +22,7 @@ exports.handler = async (event) => {
   }
 
   const prompt = body.prompt || '';
+  const useGrounding = body.grounding === true; // 프론트엔드 요청에 따른 그라운딩 켜기 옵션
   const API_KEY = process.env.GEMINI_API_KEY;
 
   if (!API_KEY) {
@@ -33,30 +34,46 @@ exports.handler = async (event) => {
   }
 
   try {
+    const requestPayload = {
+      contents: [{ parts: [{ text: prompt }] }]
+    };
+
+    // Google 검색 그라운딩 활성화
+    if (useGrounding) {
+      requestPayload.tools = [{ google_search: {} }];
+    }
+
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+        body: JSON.stringify(requestPayload)
       }
     );
 
     const data = await resp.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    const candidate = data?.candidates?.[0];
+    const text = candidate?.content?.parts?.[0]?.text || null;
+
+    // 그라운딩 검색 출처 정보 추출
+    let sources = [];
+    if (candidate?.groundingMetadata?.groundingChunks) {
+      sources = candidate.groundingMetadata.groundingChunks
+        .map(chunk => chunk.web)
+        .filter(web => web && web.uri)
+        .map(web => ({ title: web.title || web.uri, url: web.uri }));
+    }
 
     return {
       statusCode: resp.ok ? 200 : resp.status,
       headers,
-      body: JSON.stringify({ text, raw: data, error: data?.error?.message || null })
+      body: JSON.stringify({ text, sources, raw: data, error: data?.error?.message || null })
     };
   } catch (err) {
     return {
       statusCode: 500,
       headers,
-      // 💡 오타 수정 완료 (JSㅇㅇㅇON -> JSON)
       body: JSON.stringify({ error: err.message })
     };
   }
