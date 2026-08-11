@@ -1,6 +1,17 @@
 exports.handler = async (event) => {
+  // CORS 처리 (브라우저 요청 대응)
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   let body = {};
@@ -16,13 +27,12 @@ exports.handler = async (event) => {
   if (!API_KEY) {
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' })
     };
   }
 
   try {
-    // 💡 gemini-1.5-flash(단종) -> gemini-2.5-flash(신규 사용자 접근 제한) -> gemini-flash-latest로 변경
-    // latest 별칭은 그 시점에 신규 사용자도 쓸 수 있는 최신 Flash 모델을 자동으로 가리켜줌
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
       {
@@ -39,15 +49,14 @@ exports.handler = async (event) => {
 
     return {
       statusCode: resp.ok ? 200 : resp.status,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
+      headers,
       body: JSON.stringify({ text, raw: data, error: data?.error?.message || null })
     };
   } catch (err) {
     return {
       statusCode: 500,
+      headers,
+      // 💡 오타 수정 완료 (JSㅇㅇㅇON -> JSON)
       body: JSON.stringify({ error: err.message })
     };
   }
