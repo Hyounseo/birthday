@@ -441,6 +441,9 @@
 
       if (stepNum === 1) {
         document.getElementById('lock-screen').classList.remove('opacity-0', 'pointer-events-none');
+        // 잠금화면으로 전환 시 AI 결과창 숨기기 및 초기화
+        document.getElementById('msg-result').classList.add('hidden');
+        document.getElementById('generated-msg').innerText = '';
       } else {
         document.getElementById('lock-screen').classList.add('opacity-0', 'pointer-events-none');
         if (stepNum === 2) {
@@ -453,6 +456,9 @@
         } else if (stepNum === 4) {
           switchTab('msg', 4);
           document.getElementById('msg-custom-prompt').value = "첫 직장 화이팅 하라고 해줘!";
+          // 4단계 진입 시 이전 결과창을 숨겨서 깨끗하게 유지
+          document.getElementById('msg-result').classList.add('hidden');
+          document.getElementById('generated-msg').innerText = '';
         }
       }
     }
@@ -462,6 +468,10 @@
     }
 
     function resetDemo() {
+      // 초기화 버튼 클릭 시 결과창 및 입력 필드 초기화
+      document.getElementById('msg-result').classList.add('hidden');
+      document.getElementById('generated-msg').innerText = '';
+      document.getElementById('msg-custom-prompt').value = '';
       setStep(1);
     }
 
