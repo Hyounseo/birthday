@@ -723,7 +723,6 @@
       showToast('선물 기록이 추가되었습니다! 🎁');
     }
 
-    /* 💡 [수정 완료]: 클릭한 상품의 가격대/카테고리와 가장 유사한 상품 2개를 다채롭게 추출 */
     function openGiftDetailModal(itemName) {
       let item = currentGiftPool.find(g => g.name === itemName) || giftDatabase.find(g => g.name === itemName);
       if (!item) {
@@ -735,20 +734,23 @@
       document.getElementById('detail-price').innerText = `약 ${parseInt(item.price).toLocaleString()}원`;
       document.getElementById('detail-desc').innerText = item.desc || `${item.name} - 20대 인기 추천 상품입니다.`;
 
-      const currentCat = item.cat || document.getElementById('gift-category').value;
-      const currentPrice = parseInt(item.price) || 50000;
+      /* 🔧 수정된 부분: 같은 카테고리 & 가격이 비슷한 순으로 "비슷한 추천 상품" 선별 */
+      const itemCat = item.cat || null;
 
-      // 1. 현재 보고 있는 상품 제외 & 동일 카테고리 우선 선택
-      let candidates = giftDatabase.filter(g => g.name !== item.name && g.cat === currentCat);
-      if (candidates.length < 2) {
-        candidates = giftDatabase.filter(g => g.name !== item.name);
+      let related = giftDatabase
+        .filter(g => g.name !== item.name)
+        .filter(g => !itemCat || g.cat === itemCat)
+        .sort((a, b) => Math.abs(a.price - item.price) - Math.abs(b.price - item.price))
+        .slice(0, 2);
+
+      // 같은 카테고리에 상품이 2개 미만이면 가격 유사도 기준으로 전체에서 채움 (AI 추천 상품 등 cat 정보가 없는 경우 포함)
+      if (related.length < 2) {
+        const fallback = giftDatabase
+          .filter(g => g.name !== item.name && !related.some(r => r.name === g.name))
+          .sort((a, b) => Math.abs(a.price - item.price) - Math.abs(b.price - item.price))
+          .slice(0, 2 - related.length);
+        related = related.concat(fallback);
       }
-
-      // 2. 현재 상품과 가격 차이가 가장 적은 순서(가장 비슷한 가격대)로 정렬
-      candidates.sort((a, b) => Math.abs(a.price - currentPrice) - Math.abs(b.price - currentPrice));
-
-      // 3. 비슷한 가격대 후보군 상위 4개 중 무작위로 2개를 골라 고정되지 않고 다채롭게 노출
-      const related = candidates.slice(0, 4).sort(() => 0.5 - Math.random()).slice(0, 2);
 
       document.getElementById('detail-related-list').innerHTML = related.map(r => `
         <div onclick="openGiftDetailModal('${r.name}')" class="p-1.5 bg-gray-50 hover:bg-brand-50/50 rounded-lg flex items-center justify-between text-[9px] cursor-pointer transition border border-gray-100">
