@@ -72,8 +72,8 @@
           <!-- Lock Screen -->
           <div id="lock-screen" class="absolute inset-0 bg-cover bg-center z-40 flex flex-col justify-between p-6 pt-12 transition-all duration-500" style="background-image: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1000&auto=format&fit=crop');">
             <div class="text-center text-white space-y-1">
-              <p class="text-xs font-medium opacity-90">8월 15일 토요일</p>
-              <h2 class="text-5xl font-extrabold tracking-tight">09:41</h2>
+              <p id="lock-date" class="text-xs font-medium opacity-90"></p>
+              <h2 id="lock-time" class="text-5xl font-extrabold tracking-tight"></h2>
             </div>
 
             <!-- Push Notification Card -->
@@ -195,7 +195,7 @@
                       <span class="text-[11px] font-bold text-gray-700">희망 예산</span>
                       <span id="price-display" class="text-[11px] font-extrabold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">50,000 원</span>
                     </div>
-                    <input type="range" id="gift-price-slider" min="10000" max="300000" step="5000" value="50000" oninput="updatePriceDisplay(this.value)" class="w-full accent-brand-400 cursor-pointer">
+                    <input type="range" id="gift-price-slider" min="10000" max="350000" step="5000" value="50000" oninput="updatePriceDisplay(this.value)" class="w-full accent-brand-400 cursor-pointer">
                   </div>
 
                   <button onclick="recommendGift()" class="w-full py-2.5 bg-brand-400 hover:bg-brand-500 text-white font-bold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1 transition">
@@ -207,20 +207,20 @@
               <!-- 추천 로딩 상태 -->
               <div id="gift-loading" class="hidden bg-white rounded-2xl p-4 border border-brand-100 text-center space-y-2 shadow-sm">
                 <div class="inline-block animate-spin w-5 h-5 border-2 border-brand-400 border-t-transparent rounded-full"></div>
-                <p class="text-[11px] font-bold text-brand-600">AI가 조건에 맞는 선물을 분석하는 중입니다...</p>
+                <p class="text-[11px] font-bold text-brand-600">AI가 트렌드와 예산에 맞춰 분석 중입니다...</p>
               </div>
 
               <!-- 추천 결과 목록 -->
               <div id="gift-result" class="hidden space-y-1.5">
                 <div class="flex items-center justify-between">
                   <h3 class="text-[10px] font-bold text-gray-400">RECOMMENDED ITEMS</h3>
-                  <span id="gift-engine-tag" class="text-[9px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md">Gemini AI 엔진</span>
+                  <span id="gift-engine-tag" class="text-[9px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md">Groq 트렌드 AI</span>
                 </div>
                 <div id="gift-items" class="space-y-1.5"></div>
               </div>
             </section>
 
-            <!-- 기능 3: Gemini AI 축하 멘트 생성기 -->
+            <!-- 기능 3: AI 축하 멘트 생성기 -->
             <section id="sec-msg" class="space-y-4 hidden">
               <div class="bg-surface rounded-2xl p-4 border border-gray-100 space-y-3">
                 <h2 class="text-xs font-bold text-gray-900 flex items-center gap-1">
@@ -460,46 +460,99 @@
       }
     ];
 
-    /* 🎁 1만~30만 원대 구간별 30개 이상의 촘촘한 정제 선물 DB */
+    /* 🎁 1만 원부터 35만 원까지 공백 없는 실존 인기 선물 DB (총 75종) */
     const giftDatabase = [
-      // 뷰티 / 코스메틱 (beauty)
-      { name: "올리브영 기프트카드 1만원권", cat: "beauty", price: 10000, icon: "💳", desc: "1만 원대 부담 없는 기프티콘." },
-      { name: "카카오프렌즈 세범 파우더", cat: "beauty", price: 12000, icon: "✨", desc: "아기자기한 데일리 파우더." },
-      { name: "키엘 립밤 #1", cat: "beauty", price: 18000, icon: "💄", desc: "보습력 높은 클래식 립밤." },
-      { name: "논픽션 핸드케어 세트", cat: "beauty", price: 25000, icon: "🧴", desc: "인스타 감성의 정성 어린 선물." },
-      { name: "탬버린즈 쉘 핑거 핸드크림", cat: "beauty", price: 32000, icon: "🌸", desc: "20대 여성 선호도 최고 오브제 핸드크림." },
-      { name: "이솝 핸드크림 75ml", cat: "beauty", price: 39000, icon: "🍃", desc: "시트러스 향의 워너비 핸드크림." },
-      { name: "샤넬 루쥬 코코 밤", cat: "beauty", price: 48000, icon: "💄", desc: "고급스러운 인디 핑크 보습 립밤." },
-      { name: "디올 어딕트 립 글로우", cat: "beauty", price: 48000, icon: "💋", desc: "국민 틴트 립밤 베스트셀러." },
-      { name: "딥티크 퍼퓸드 핸드워시", cat: "beauty", price: 82000, icon: "🧼", desc: "욕실 감성을 채워주는 고급 오뜨 퍼퓸 라인." },
-      { name: "조말론 블랙베리 앤 베이 30ml", cat: "beauty", price: 110000, icon: "🕯️", desc: "남녀노소 선호도 1위 대표 향수." },
-      { name: "샤넬 샹스 오 타늘 퍼퓸 50ml", cat: "beauty", price: 179000, icon: "🌸", desc: "우아하고 달콤한 프리미엄 향수." },
-      { name: "샤넬 루쥬 알뤼르 립스틱 세트", cat: "beauty", price: 240000, icon: "💄", desc: "럭셔리한 리미티드 뷰티 기프트 세트." },
-      { name: "디올 뷰티 프리미엄 홀리데이 기프트", cat: "beauty", price: 290000, icon: "👑", desc: "최고급 명품 코스메틱 기프트 패키지." },
+      // 💄 [뷰티 / 코스메틱 / 스킨케어 / 향수] (25종)
+      { id: 101, cat: 'beauty', name: '바세린 립테라피 컬러앤케어 립밤 듀오', price: 12000, icon: '💄', desc: '부담 없이 선물하기 좋은 촉촉한 국민 보습 립밤' },
+      { id: 102, cat: 'beauty', name: '버츠비 비즈왁스 & 틴티드 립밤 기프트 세트', price: 15000, icon: '💄', desc: '자연스러운 생기와 입술 보습을 챙겨주는 올리브영 스테디셀러' },
+      { id: 103, cat: 'beauty', name: '토리든 다이브인 저분자 히알루론산 수분 립 에센스 듀오', price: 18000, icon: '🧴', desc: '끈적임 없는 고수분 밀착 케어로 인기 높은 20대 필수템' },
+      { id: 104, cat: 'beauty', name: '닥터지 레드 블레미쉬 클리어 수딩 크림 기획세트', price: 22000, icon: '🧴', desc: '민감한 피부를 순하게 진정시키는 수분 진정 크림' },
+      { id: 105, cat: 'beauty', name: '이니스프리 그린티 씨드 히알루론산 세럼 세트', price: 25000, icon: '🧴', desc: '산뜻하고 맑은 피부를 위한 데일리 수분 기초' },
+      { id: 106, cat: 'beauty', name: '논픽션 핸드크림 50ml (상탈크림/가이악플라워)', price: 25000, icon: '🧴', desc: '감각적인 시그니처 향과 세련된 패키징의 베스트셀러' },
+      { id: 107, cat: 'beauty', name: '탬버린즈 에그 립밤 (로즈우디/언센티드)', price: 28900, icon: '💄', desc: '유니크한 달걀 오브제 패키지의 트렌디한 감성 선물' },
+      { id: 108, cat: 'beauty', name: '논픽션 핸드크림 & 립밤 듀오 기프트 세트', price: 34000, icon: '🧴', desc: '카카오톡 선물하기 20대 선호도 최상위 힐링 세트' },
+      { id: 109, cat: 'beauty', name: '라네즈 립 슬리핑 마스크 & 립 글로이 밤 듀오', price: 36000, icon: '💄', desc: '밤낮으로 입술 각질과 보습을 완벽 케어하는 인기템' },
+      { id: 110, cat: 'beauty', name: '탬버린즈 쉘 퍼퓸 핸드크림 30ml (CHAMO/FEY9)', price: 38000, icon: '🌸', desc: '향수처럼 오래 남는 감각적인 시그니처 퍼퓸 핸드크림' },
+      { id: 111, cat: 'beauty', name: '탬버린즈 에그 퍼퓸 핸드크림 40ml (PUMKINI)', price: 42000, icon: '🌸', desc: '포근하고 스위트한 향이 매력적인 화제의 신상 핸드밤' },
+      { id: 112, cat: 'beauty', name: '이솝 레저렉션 아로마틱 핸드밤 75ml', price: 43000, icon: '🧴', desc: '은은한 시트러스 허브 아로마의 클래식 프리미엄 핸드크림' },
+      { id: 113, cat: 'beauty', name: '샤넬 루쥬 코코 밤 (립케어 립스틱)', price: 48000, icon: '💄', desc: '맑고 투명한 발색과 고급스러운 보습감을 주는 샤넬 립' },
+      { id: 114, cat: 'beauty', name: '디올 어딕트 립 글로우 (국민 립밤)', price: 49000, icon: '💄', desc: '생기 있는 입술을 완성하는 백화점 뷰티 1위 립밤' },
+      { id: 115, cat: 'beauty', name: '입생로랑 따뚜아쥬 꾸뛰르 벨벳 틴트', price: 58000, icon: '💋', desc: '선명한 발색과 가벼운 벨벳 텍스처의 럭셔리 틴트' },
+      { id: 116, cat: 'beauty', name: '이솝 레저렉션 아로마틱 핸드케어 듀오 (워시+밤)', price: 79000, icon: '🧴', desc: '욕실 공간의 품격을 높여주는 호불호 없는 아로마 듀오' },
+      { id: 117, cat: 'beauty', name: '달바 화이트 트러플 프리미엄 3종 스킨케어 세트', price: 95000, icon: '🧴', desc: '항산화 광채와 탄력을 선사하는 프리미엄 비건 스킨케어' },
+      { id: 118, cat: 'beauty', name: '조말론 런던 잉글리쉬 페어 앤 프리지아 코롱 30ml', price: 115000, icon: '🌸', desc: '신선하고 은은한 과일 꽃향의 대표 니치 향수' },
+      { id: 119, cat: 'beauty', name: '설화수 자음 2종 기획 세트 (스킨/에멀젼)', price: 140000, icon: '🧴', desc: '부모님/어르신 생신 선물 부동의 1위 대표 효도 기초 세트' },
+      { id: 120, cat: 'beauty', name: '후 비첩 순환 에센스 스페셜 기획 에디션', price: 165000, icon: '🌸', desc: '맑고 투명한 피부를 가꿔주는 럭셔리 궁중 안티에이징' },
+      { id: 121, cat: 'beauty', name: '샤넬 샹스 오 타늘 오 드 뚜왈렛 50ml', price: 189000, icon: '🌸', desc: '사랑스럽고 부드러운 플로럴 프루티 시그니처 향수' },
+      { id: 122, cat: 'beauty', name: '조말론 라임 바질 앤 만다린 코롱 100ml', price: 218000, icon: '🌸', desc: '싱그럽고 청량한 잔향을 선사하는 대용량 니치 향수' },
+      { id: 123, cat: 'beauty', name: '에스티로더 갈색병 나이트 리페어 75ml 점보 세트', price: 245000, icon: '🧴', desc: '피부 탄력과 리페어를 책임지는 글로벌 1위 안티에이징 세럼' },
+      { id: 124, cat: 'beauty', name: '설화수 자음생크림 클래식 60ml 세트', price: 270000, icon: '🧴', desc: '고농축 인삼 펩타이드로 팽팽한 탄력을 채우는 고영양 크림' },
+      { id: 125, cat: 'beauty', name: '딥티크 오 드 퍼퓸 플레르 드 뽀 75ml', price: 289000, icon: '🌸', desc: '살결 같은 은은하고 포근한 머스크 향의 워너비 니치 향수' },
+      { id: 126, cat: 'beauty', name: '이니스프리 립밤', price: 9000, icon: '💄', desc: '부담 없이 선물하기 좋은 데일리 립밤' },
+      { id: 127, cat: 'beauty',name: "무인양품 산뜻정화 토너",price: 9900,icon: "🧴",desc: "부담 없이 선물하기 좋은 데일리 스킨케어 아이템"},
+      { id: 128, cat: 'beauty',name: "무인양품 산뜻정화 스킨",price: 9900,icon: "🧴",desc: "매일 사용할 수 있어 실용적인 선물"},
+      { id: 129, cat: 'beauty', name: '롬앤 글래스팅 멜팅 밤', price: 9900, icon: '💄', desc: '데일리로 부담 없이 사용하기 좋은 촉촉한 립 메이크업 제품' },
+      { id: 130, cat: 'beauty', name: '라운드랩 자작나무 수분 크림 20ml', price: 9000, icon: '🧴', desc: '가볍게 사용할 수 있어 선물하기 좋은 촉촉한 보습 아이템' },
 
-      // 전자기기 / 테크 (tech)
-      { name: "스마트폰 그립톡 & 고리 세트", cat: "tech", price: 12000, icon: "📱", desc: "귀여운 데일리 테크 소품." },
-      { name: "카카오프렌즈 모니터 피규어", cat: "tech", price: 15000, icon: "🖥️", desc: "데스크를 꾸며주는 아기자기한 아이템." },
-      { name: "샤오미 보조배터리 10000mAh", cat: "tech", price: 22000, icon: "🔋", desc: "슬림하고 컴팩트한 보조배터리." },
-      { name: "샤오미 보조배터리 20000mAh", cat: "tech", price: 28000, icon: "🔋", desc: "대용량 고속 충전 실용템." },
-      { name: "카카오프렌즈 고속 무선 충전기", cat: "tech", price: 35000, icon: "⚡", desc: "데스크 무선 충전 패드." },
-      { name: "JBL GO 3 블루투스 스피커", cat: "tech", price: 49000, icon: "🔊", desc: "방수 지원 컴팩트 음향기기." },
-      { name: "소니 WH-CH520 무선 헤드폰", cat: "tech", price: 89000, icon: "🎧", desc: "가볍고 레트로한 감성 헤드폰." },
-      { name: "로지텍 MX Keys Mini 키보드", cat: "tech", price: 129000, icon: "⌨️", desc: "타건감이 우수한 고급 키보드." },
-      { name: "마샬 윌로우 블루투스 스피커", cat: "tech", price: 159000, icon: "🎵", desc: "감성적인 디자인과 울림 깊은 음질." },
-      { name: "에어팟 4세대", cat: "tech", price: 199000, icon: "🎧", desc: "애플 유저 필수 테크 선물." },
-      { name: "소니 WH-1000XM5 헤드폰", cat: "tech", price: 285000, icon: "🎧", desc: "노이즈 캔슬링 최고급 무선 헤드폰." },
+      // 🎧 [테크 / 디지털 / 소형가전 / 헬스케어] (25종)
+      { id: 201, cat: 'tech', name: '신지모루 맥세이프 핑거링 폰스트랩 거치대', price: 12900, icon: '📱', desc: '한 손 조작과 편리한 거치를 돕는 가성비 데일리 템' },
+      { id: 202, cat: 'tech', name: '앤커(Anker) 고속 충전 C타입 보조배터리 5000mAh', price: 19800, icon: '🔋', desc: '초경량 미니 사이즈로 가방에 쏙 들어가는 일체형 보조배터리' },
+      { id: 203, cat: 'tech', name: '로지텍 페블 M350 무소음 블루투스 마우스', price: 24900, icon: '🖱️', desc: '조용한 도서관/카페에서도 편안한 슬림 무소음 마우스' },
+      { id: 204, cat: 'tech', name: '신지모루 맥세이프 3in1 고속 무선충전기 거치대', price: 29800, icon: '⚡', desc: '스마트폰/워치/이어폰을 깔끔하게 동시 충전하는 데스크 템' },
+      { id: 205, cat: 'tech', name: '로지텍 K380 멀티 디바이스 무선 키보드', price: 39000, icon: '⌨️', desc: '태블릿과 노트북 어디서나 쓰기 좋은 슬림 멀티페어링 키보드' },
+      { id: 206, cat: 'tech', name: '샤오미 미밴드 8 스마트 밴드', price: 49800, icon: '⌚', desc: '가벼운 착용감과 수면/걸음수 건강 트래킹 스마트 밴드' },
+      { id: 207, cat: 'tech', name: '카카오프렌즈 무선 무드등 가습기', price: 55000, icon: '💡', desc: '탁상 위를 촉촉하고 아늑하게 밝혀주는 힐링 무드 가전' },
+      { id: 208, cat: 'tech', name: '로지텍 페블 2 무선 키보드 & 마우스 세트', price: 65000, icon: '⌨️', desc: '감각적인 파스텔 컬러와 조용한 타건감의 데스크 세트' },
+      { id: 209, cat: 'tech', name: '오므론 자동 전자 혈압계 (팔뚝형)', price: 79000, icon: '💓', desc: '어르신들이 집에서 손쉽게 혈압을 측정하는 정밀 헬스케어' },
+      { id: 210, cat: 'tech', name: 'JBL Clip 4 휴대용 클립형 블루투스 스피커', price: 89000, icon: '🔊', desc: '어디든 걸 수 있는 클립과 방수 기능을 갖춘 아웃도어 스피커' },
+      { id: 211, cat: 'tech', name: '오랄비 PRO 500 전동칫솔 세트', price: 99000, icon: '🪥', desc: '정밀한 세정력으로 구강 건강을 책임지는 실용적인 전동칫솔' },
+      { id: 212, cat: 'tech', name: '풀리오 목 어깨 무선 온열 마사지기', price: 119000, icon: '💆', desc: '강력한 주무름 손맛과 온열 힐링을 선사하는 대세 마사지기' },
+      { id: 213, cat: 'tech', name: '인스탁스 미니 12 폴라로이드 즉석카메라 패키지', price: 139000, icon: '📷', desc: '소중한 추억을 그 자리에서 인화하는 아날로그 감성 카메라' },
+      { id: 214, cat: 'tech', name: '보스 사운드링크 마이크로 블루투스 스피커', price: 159000, icon: '🔊', desc: '손바닥만 한 크기에서 뿜어져 나오는 단단한 프리미엄 저음' },
+      { id: 215, cat: 'tech', name: '소니 노이즈캔슬링 무선 헤드폰 WH-CH720N', price: 169000, icon: '🎧', desc: '깃털처럼 가벼운 착용감과 고성능 ANC를 갖춘 헤드폰' },
+      { id: 216, cat: 'tech', name: '풀리오 종아리 마사지기 V2 듀얼 세트', price: 198000, icon: '💆', desc: '다리 부기와 뭉친 근육을 강력한 공기압으로 풀어주는 힐링템' },
+      { id: 217, cat: 'tech', name: '보스 사운드링크 플렉스 블루투스 스피커 II', price: 229000, icon: '🔊', desc: '풍부하고 선명한 사운드를 자랑하는 고음질 아웃도어 스피커' },
+      { id: 218, cat: 'tech', name: '마샬 엠버튼 II 포터블 블루투스 스피커', price: 249000, icon: '🔊', desc: '클래식 감성 디자인과 360도 입체 음향의 인테리어 스피커' },
+      { id: 219, cat: 'tech', name: '애플워치 SE 2세대 GPS 40mm', price: 279000, icon: '⌚', desc: '아이폰과 완벽하게 연동되는 최고의 스마트 라이프 디바이스' },
+      { id: 220, cat: 'tech', name: '소니 프리미엄 노이즈캔슬링 이어폰 WF-1000XM5', price: 299000, icon: '🎧', desc: '세계 최고 수준의 노이즈 캔슬링과 무손실 하이엔드 사운드' },
+      { id: 221, cat: 'tech', name: '마샬 액톤 III 블루투스 홈 스피커', price: 319000, icon: '🔊', desc: '거실과 방 전체를 채우는 묵직하고 따뜻한 프리미엄 사운드' },
+      { id: 222, cat: 'tech', name: '애플 에어팟 프로 2세대 USB-C', price: 349000, icon: '🎧', desc: '적응형 오디오와 완벽한 노이즈 캔슬링의 완성형 테크 아이템' },
+      { id: 223, cat: 'tech', name: '소니 프리미엄 노이즈캔슬링 헤드폰 WH-1000XM5', price: 399000, icon: '🎧', desc: '압도적인 정적 속에서 즐기는 최상급 하이파이 헤드폰' },
+      { id: 224, cat: 'tech', name: '애플워치 시리즈 9 GPS 41mm', price: 449000, icon: '⌚', desc: '더블 탭 제스처와 정밀한 건강 모니터링의 플래그십 워치' },
+      { id: 225, cat: 'tech', name: '보스 QC 울트라 노이즈캔슬링 무선 헤드폰', price: 479000, icon: '🎧', desc: '공간 음향 몰입감과 극강의 편안한 착용감을 주는 프리미엄 헤드폰' },
+      { id: 226, cat: 'tech', name: '삼성전자 USB Type-C 케이블', price: 9900, icon: '🔌', desc: '매일 사용하는 충전 케이블이라 실용적인 선물로 주기 좋은 아이템' },
+      { id: 227, cat: 'tech', name: '아이리버 블루투스 무선 마우스', price: 9900, icon: '🖱️', desc: '학교나 회사에서 유용하게 사용할 수 있는 실용적인 데일리 아이템' },
+      { id: 228, cat: 'tech', name: '오아 무드 미니 가습기', price: 9900, icon: '💡', desc: '책상이나 침대 옆에 두고 사용하기 좋은 아담한 생활 가전' },
 
-      // 패션 / 잡화 (fashion)
-      { name: "무인양품 다용도 캔버스 백", cat: "fashion", price: 15000, icon: "👜", desc: "휘뚜루마투루 쓰기 좋은 가방." },
-      { name: "스타벅스 스테인리스 텀블러", cat: "fashion", price: 33000, icon: "☕", desc: "호불호 없는 대표적인 기프트." },
-      { name: "킨토 트래블 텀블러 500ml", cat: "fashion", price: 38000, icon: "☕", desc: "단열성 뛰어난 트래블 텀블러." },
-      { name: "아위(AHWE) 체크 머플러", cat: "fashion", price: 45000, icon: "🧣", desc: "부드럽고 포근한 겨울 필수템." },
-      { name: "마르디 메크르디 카드 지갑", cat: "fashion", price: 58000, icon: "👛", desc: "트렌디한 시그니처 플라워 지갑." },
-      { name: "폴로 라프 로렌 볼캡", cat: "fashion", price: 79000, icon: "🧢", desc: "데일리룩 완성 클래식 모자." },
-      { name: "메종키츠네 파우치", cat: "fashion", price: 120000, icon: "👝", desc: "프렌치 감성의 고급 파우치." },
-      { name: "메종마르지엘라 카드지갑", cat: "fashion", price: 230000, icon: "💳", desc: "스티치 디자인의 명품 지갑." },
-      { name: "아크네 스튜디오 울 스카프", cat: "fashion", price: 285000, icon: "🧣", desc: "고급 울 소재 명품 머플러." }
+      // 👜 [패션 / 라이프 / 건강식품 / 잡화] (25종)
+      { id: 301, cat: 'fashion', name: '스타벅스 e카드 교환권 & 디저트 머그 세트', price: 15000, icon: '☕', desc: '누구나 기분 좋게 즐기는 부담 없는 실속형 커피 선물' },
+      { id: 302, cat: 'fashion', name: '카카오프렌즈 페이스 봉제 인형 키링', price: 18000, icon: '🧸', desc: '가방에 걸어 귀여운 포인트를 주는 20대 인기 백참' },
+      { id: 303, cat: 'fashion', name: '배스킨라빈스 달콤한 케이크 모바일 교환권', price: 26000, icon: '🎂', desc: '생일 파티 분위기를 한껏 돋워주는 달콤한 아이스크림 케이크' },
+      { id: 304, cat: 'fashion', name: '마뗑킴 로고 코인 지갑 키링', price: 38000, icon: '👛', desc: '가방 꾸미기와 카드/동전 수납이 동시에 되는 트렌드 아이템' },
+      { id: 305, cat: 'fashion', name: '이미스(EMIS) 시그니처 로고 볼캡', price: 42000, icon: '🧢', desc: '예쁜 색감과 완벽한 핏으로 데일리 코디에 최고인 볼캡' },
+      { id: 306, cat: 'fashion', name: '오설록 프리미엄 티 컬렉션 9종 세트', price: 55000, icon: '🍵', desc: '남녀노소 향긋하고 품격 있게 마시는 고급 블렌디드 티' },
+      { id: 307, cat: 'fashion', name: '폴로 랄프로렌 클래식 포니 자수 양말 3팩 세트', price: 65000, icon: '🧦', desc: '깔끔하고 클래식한 디자인의 고급 데일리 코튼 삭스' },
+      { id: 308, cat: 'fashion', name: '정관장 활기력 30병 세트', price: 79000, icon: '🍯', desc: '바쁜 일상에 간편하게 기력을 채워주는 앰플형 프리미엄 홍삼' },
+      { id: 309, cat: 'fashion', name: '질스튜어트 뉴욕 천연 가죽 하트 레터링 카드지갑', price: 89000, icon: '👛', desc: '슬림한 크기와 사랑스러운 하트 참 포인트의 소가죽 지갑' },
+      { id: 310, cat: 'fashion', name: '정관장 홍삼정 에브리타임 30포', price: 102000, icon: '🍯', desc: '스틱형으로 휴대하기 좋은 부모님/친구 대표 면역력 선물' },
+      { id: 311, cat: 'fashion', name: '메종키츠네 폭스헤드 캔버스 토트백', price: 110000, icon: '👜', desc: '가볍고 튼튼한 캔버스 소재의 감성 데일리 에코백' },
+      { id: 312, cat: 'fashion', name: '아페쎄(A.P.C.) 로고 데님 에코백', price: 135000, icon: '👜', desc: '미니멀한 브랜드 로고가 돋보이는 캐주얼 데일리 백' },
+      { id: 313, cat: 'fashion', name: '메트로시티 천연 소가죽 슬림 반지갑', price: 155000, icon: '👛', desc: '고급스러운 가죽 질감과 우아한 실루엣의 실용적인 지갑' },
+      { id: 314, cat: 'fashion', name: '닥스 실크 체크 자카드 숄 머플러', price: 175000, icon: '🧣', desc: '부모님/어르신들이 애용하는 부드럽고 클래식한 실크 스카프' },
+      { id: 315, cat: 'fashion', name: '비비안웨스트우드 울 바젤 베레모 / 니트 비니', price: 195000, icon: '🧢', desc: '시그니처 ORB 자수 포인트로 패셔너블한 럭셔리 모자' },
+      { id: 316, cat: 'fashion', name: '정관장 홍삼정 순수 240g 기획 세트', price: 210000, icon: '🍯', desc: '100% 홍삼 농축액으로 진한 기력을 선물하는 프리미엄 효도템' },
+      { id: 317, cat: 'fashion', name: '아미(AMI) 하트 로고 자수 코튼 볼캡', price: 225000, icon: '🧢', desc: '프랑스 감성의 하트 로고 자수가 매력적인 명품 볼캡' },
+      { id: 318, cat: 'fashion', name: '비비안웨스트우드 천연 가죽 사피아노 카드지갑', price: 245000, icon: '👛', desc: '골드 메탈 로고와 견고한 사피아노 가죽의 베스트셀러' },
+      { id: 319, cat: 'fashion', name: '아미(AMI) 하트 로고 클래식 울 가디건', price: 260000, icon: '🧥', desc: '부드러운 울 소재와 세련된 핏의 워너비 명품 가디건' },
+      { id: 320, cat: 'fashion', name: '아크네 스튜디오 울 프린지 머플러', price: 290000, icon: '🧣', desc: '도톰한 보온성과 핑크 라벨 감성의 시그니처 머플러' },
+      { id: 321, cat: 'fashion', name: '정관장 홍삼정 마스터클래스 200g', price: 320000, icon: '🍯', desc: '최상급 지삼이 함유된 최고급 VIP 프리미엄 홍삼 농축액' },
+      { id: 322, cat: 'fashion', name: '메종 마르지엘라 스티치 레더 카드지갑', price: 340000, icon: '👛', desc: '4스티치 포인트의 미니멀하고 시크한 럭셔리 카드 지갑' },
+      { id: 323, cat: 'fashion', name: '보테가 베네타 인트레치아토 가죽 카드케이스', price: 390000, icon: '👛', desc: '장인 정신의 가죽 위빙 패턴이 돋보이는 하이엔드 지갑' },
+      { id: 324, cat: 'fashion', name: '셀린느 트리옹프 플랩 천연 가죽 카드홀더', price: 450000, icon: '👛', desc: '골드 트리옹프 버클로 고급스러움의 정점을 찍는 명품 지갑' },
+      { id: 325, cat: 'fashion', name: '구찌 GG 마몽 레더 카드케이스', price: 490000, icon: '👛', desc: '더블 G 메탈 장식이 돋보이는 클래식 럭셔리 지갑' },
+      { id: 334, cat: 'fashion', name: '옐로우스톤 사피아노 가죽 카드 지갑', price: 9900, icon: '👛', desc: '카드와 자주 쓰는 소지품을 깔끔하게 보관할 수 있는 실용적인 선물' },
+      { id: 335, cat: 'fashion', name: '카카오프렌즈 춘식이 미니 파우치', price: 9000, icon: '👝', desc: '작은 소지품을 넣어 다니기 좋은 귀엽고 실용적인 데일리 파우치' },
+      { id: 336, cat: 'fashion', name: '스투피 삼겹살 양말 3켤레 세트', price: 10000, icon: '🧦', desc: '재미있는 디자인으로 가볍게 웃음을 줄 수 있는 센스 있는 선물' },
     ];
 
     function showToast(msg) {
@@ -732,9 +785,8 @@
       document.getElementById('detail-icon').innerText = item.icon || "🎁";
       document.getElementById('detail-title').innerText = item.name;
       document.getElementById('detail-price').innerText = `약 ${parseInt(item.price).toLocaleString()}원`;
-      document.getElementById('detail-desc').innerText = item.desc || `${item.name} - 20대 인기 추천 상품입니다.`;
+      document.getElementById('detail-desc').innerText = item.desc || `${item.name} - 만족도가 높은 실존 추천 상품입니다.`;
 
-      /* 🔧 수정된 부분: 같은 카테고리 & 가격이 비슷한 순으로 "비슷한 추천 상품" 선별 */
       const itemCat = item.cat || null;
 
       let related = giftDatabase
@@ -743,10 +795,11 @@
         .sort((a, b) => Math.abs(a.price - item.price) - Math.abs(b.price - item.price))
         .slice(0, 2);
 
-      // 같은 카테고리에 상품이 2개 미만이면 가격 유사도 기준으로 전체에서 채움 (AI 추천 상품 등 cat 정보가 없는 경우 포함)
       if (related.length < 2) {
         const fallback = giftDatabase
-          .filter(g => g.name !== item.name && !related.some(r => r.name === g.name))
+          .filter(g => g.name !== item.name)
+          .filter(g => !itemCat || g.cat === itemCat)
+          .filter(g => !related.some(r => r.name === g.name))
           .sort((a, b) => Math.abs(a.price - item.price) - Math.abs(b.price - item.price))
           .slice(0, 2 - related.length);
         related = related.concat(fallback);
@@ -770,20 +823,20 @@
       document.getElementById('detail-modal').classList.add('hidden');
     }
 
-    /* 🎁 정교화된 선물 추천 로직 (설정 예산 직하의 가장 가까운 3개 추출) */
+    /* 🎁 1. RAG 정밀 큐레이션 선물 추천 (랜덤 제거 + AI 상품 변조 검증 반영) */
     async function recommendGift() {
       const select = document.getElementById('gift-target-friend');
       const friendId = parseInt(select.value);
       const friend = birthdays.find(b => b.id === friendId);
 
       const catVal = document.getElementById('gift-category').value;
-      const maxPrice = parseInt(document.getElementById('gift-price-slider').value);
+      const targetBudget = parseInt(document.getElementById('gift-price-slider').value);
 
       const pastLogs = (friend && friend.logs && friend.logs.length > 0) 
         ? friend.logs.map(l => l.item).join(', ') 
         : '없음';
 
-      const catMap = { beauty: "뷰티 코스메틱", tech: "전자기기 테크", fashion: "패션 잡화" };
+      const catMap = { beauty: "뷰티/코스메틱/향수", tech: "전자기기/테크", fashion: "패션/잡화/라이프" };
       const friendName = friend ? friend.name : "친구";
 
       const loadingBox = document.getElementById('gift-loading');
@@ -794,24 +847,39 @@
       resultBox.classList.add('hidden');
       loadingBox.classList.remove('hidden');
 
-      const prompt = `20대 생일선물 3개 추천해줘.
-1. 받는사람: ${friendName}
-2. 카테고리: ${catMap[catVal]}
-3. 상한예산: ${maxPrice}원 이하 (반드시 이 예산 이하의 현실적인 실존 상품)
-4. 제외선물: ${pastLogs}
+      // 1. 카테고리 일치 + 예산 이하(<=) + 이미 준 선물 제외
+      let candidatePool = giftDatabase.filter(item => {
+        const matchCat = (item.cat === catVal);
+        const matchPrice = (item.price <= targetBudget);
+        const notGiven = (pastLogs === '없음' || !pastLogs.includes(item.name));
+        return matchCat && matchPrice && notGiven;
+      });
 
-다른 설명 없이 아래 형태의 순수 JSON 배열만 출력해:
-[
-  {"name":"상품명","price":35000,"icon":"🎁","desc":"설명"}
-]`;
+      if (candidatePool.length === 0) {
+        candidatePool = giftDatabase.filter(item => item.cat === catVal && item.price <= targetBudget);
+      }
 
-      let aiSuccess = false;
+      // 같은 카테고리 안에서 예산과 가장 비슷한 가격대 우선 추천
+      const topCandidates = [...candidatePool]
+        .sort((a, b) => Math.abs(a.price - targetBudget) - Math.abs(b.price - targetBudget))
+        .slice(0, 6);
+
+      const prompt = `[맞춤 선물 선정 요청]
+- 받는 분: ${friendName}
+- 카테고리: ${catMap[catVal]}
+- 희망 예산: ${targetBudget.toLocaleString()}원 이하 (※ 필수: ${targetBudget.toLocaleString()}원을 초과하는 상품 절대 금지)
+- 이미 선물한 항목: ${pastLogs}
+- 추천 규칙: 같은 카테고리 안에서 가격이 예산에 가장 비슷한 실존 상품 3개를 우선 추천해주세요. 단순히 가장 비싼 상품이 아니라 예산에 맞는 비슷한 가격대 상품을 고르세요.`;
 
       try {
         const resp = await fetch(GEMINI_API_PROXY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, grounding: false })
+          body: JSON.stringify({
+            mode: 'gift',
+            prompt: prompt,
+            candidates: topCandidates
+          })
         });
 
         const data = await resp.json();
@@ -819,11 +887,27 @@
         if (resp.ok && data.text) {
           const jsonMatch = data.text.match(/\[[\s\S]*\]/);
           if (jsonMatch) {
-            const rawItems = JSON.parse(jsonMatch[0]);
-            const validItems = rawItems.filter(i => parseInt(i.price) <= maxPrice);
+            const aiItems = JSON.parse(jsonMatch[0]);
+
+            // 🔴 핵심: AI가 후보 DB에 실제로 있는 상품만 골랐는지 이름으로 대조 검증
+            // 매칭되면 DB 원본 데이터(name/price/icon)로 강제 통일, desc(추천 이유)만 AI 텍스트 사용
+            const validItems = aiItems
+              .map(ai => {
+                const matched = topCandidates.find(c => c.name === ai.name);
+                if (!matched) return null; // 후보에 없는 상품 → 제거
+                return {
+                  name: matched.name,
+                  price: matched.price,
+                  icon: matched.icon,
+                  cat: matched.cat,
+                  desc: ai.desc || matched.desc
+                };
+              })
+              .filter(Boolean)
+              .filter(i => i.price <= targetBudget);
 
             if (validItems.length > 0) {
-              engineTag.innerText = "AI 엔진";
+              engineTag.innerText = "AI 추천";
               engineTag.className = "text-[9px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-md";
 
               currentGiftPool = validItems;
@@ -841,64 +925,42 @@
                 </div>
               `).join('');
 
-              aiSuccess = true;
+              resultBox.classList.remove('hidden');
+              safeCreateIcons();
+              return;
             }
           }
         }
+        throw new Error('AI 응답 파싱 실패 또는 유효 상품 없음');
       } catch (err) {
-        console.warn("Gemini 파싱 실패 -> 로컬 데이터셋 전환:", err);
+        console.warn("AI 실패 시 스마트 폴백:", err);
+        engineTag.innerText = "맞춤 큐레이션 Engine";
+        engineTag.className = "text-[9px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md";
+        
+        const fallback = topCandidates.slice(0, 3);
+        currentGiftPool = fallback;
+
+        itemsBox.innerHTML = fallback.map(i => `
+          <div onclick="openGiftDetailModal('${i.name}')" class="p-2.5 bg-white hover:bg-brand-50/30 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm cursor-pointer transition">
+            <div class="flex items-center gap-2">
+              <span class="text-base">${i.icon}</span>
+              <div>
+                <span class="text-[11px] font-bold text-gray-800 block">${i.name}</span>
+                <span class="text-[9px] text-gray-400">약 ${parseInt(i.price).toLocaleString()}원</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-lg">상세보기 ></span>
+          </div>
+        `).join('');
+
+        resultBox.classList.remove('hidden');
+        safeCreateIcons();
       } finally {
         loadingBox.classList.add('hidden');
       }
-
-      /* 💡 로컬 DB 폴백: 설정된 예산 이하에서 가장 가까운 상위 3개 선별 */
-      if (!aiSuccess) {
-        engineTag.innerText = "맞춤 큐레이션 Engine";
-        engineTag.className = "text-[9px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md";
-
-        // 1. 해당 카테고리 & 예산 이하 상품만 필터링
-        let filtered = giftDatabase.filter(item => {
-          const matchCat = item.cat === catVal;
-          const matchPrice = item.price <= maxPrice;
-          const notPast = pastLogs === '없음' || !pastLogs.includes(item.name);
-          return matchCat && matchPrice && notPast;
-        });
-
-        // 2. 가격 비싼 순(설정 예산에 가장 가까운 순)으로 정렬
-        filtered.sort((a, b) => b.price - a.price);
-
-        if (filtered.length === 0) {
-          filtered = giftDatabase.filter(item => item.cat === catVal && item.price <= maxPrice);
-          filtered.sort((a, b) => b.price - a.price);
-        }
-
-        // 3. 예산에 가장 가까운 상위 3개만 잘라냄 (예산이 30만원이면 29만, 24만, 17만 원 등이 나옴)
-        const displayItems = filtered.slice(0, 3);
-        currentGiftPool = displayItems;
-
-        if (displayItems.length === 0) {
-          itemsBox.innerHTML = `<p class="text-[10px] text-gray-400 text-center py-3">설정하신 예산(${maxPrice.toLocaleString()}원) 이하의 추천 항목이 없습니다.</p>`;
-        } else {
-          itemsBox.innerHTML = displayItems.map(i => `
-            <div onclick="openGiftDetailModal('${i.name}')" class="p-2.5 bg-white hover:bg-brand-50/30 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm cursor-pointer transition">
-              <div class="flex items-center gap-2">
-                <span class="text-base">${i.icon}</span>
-                <div>
-                  <span class="text-[11px] font-bold text-gray-800 block">${i.name}</span>
-                  <span class="text-[9px] text-gray-400">약 ${i.price.toLocaleString()}원</span>
-                </div>
-              </div>
-              <span class="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-0.5 rounded-lg">상세보기 ></span>
-            </div>
-          `).join('');
-        }
-      }
-
-      resultBox.classList.remove('hidden');
-      safeCreateIcons();
     }
 
-    /* 🤖 AI 멘트 생성 함수 */
+    /* 💌 2. UI 옵션 100% 반영 축하 멘트 생성 함수 */
     async function generateMessageWithRealAI() {
       const relVal = document.getElementById('msg-relation').value;
       const speechVal = document.getElementById('msg-speech').value;
@@ -925,61 +987,46 @@
       };
 
       const toneMap = {
-        plain: "기교 없이 담백하고 일상적인 카톡 톤",
-        cute: "귀엽고 다정한 톤",
-        funny: "유쾌하고 재밌는 톤",
-        touching: "진중하고 따뜻한 톤"
+        plain: "담백하게 (이모티콘 전혀 쓰지 말 것)",
+        cute: "귀엽고 애교 있게 (이모티콘 적극 사용)",
+        funny: "재치 있고 유쾌하게",
+        touching: "진중하고 감동적으로 (이모티콘 최대 1개)"
       };
 
       const lengthMap = {
-        short: "2~3줄 이내로 매우 간결하게",
-        medium: "4~5줄 정도로 적당하게",
-        long: "6줄 이상으로 정성스럽게"
+        short: "1~2문장으로 아주 간결하게",
+        medium: "2~3문장의 적당한 길이로",
+        long: "3~5문장으로 길고 정성스럽게"
       };
 
-      const prompt = `당신은 센스 있는 생일 축하 메시지 작성 AI입니다.
+      const prompt = `[생일 축하 메시지 작성 요청]
+- 관계: ${relMap[relVal] || '친구'}
+- 말투: ${speechMap[speechVal] || '반말'}
+- 톤앤매너: ${toneMap[toneVal] || '담백하게'}
+- 분량: ${lengthMap[lengthVal] || '보통 분량'}
+${rawPrompt ? `- 참고 키워드 및 추가 요청사항: ${rawPrompt}
+  (※ 주의: 위 요청사항은 AI를 향한 지시문입니다. '첫 직장 화이팅 하라고 해줘' 같은 지시문 어투를 그대로 복붙하지 말고, '첫 직장 생활도 완전 파이팅이야!' 처럼 메시지를 받는 사람의 상황을 자연스럽게 축하하고 응원하는 문장으로 주어를 변환해서 녹여내세요.)` : ''}
 
-[조건]
-1. 관계: ${relMap[relVal] || '친구'}
-2. 말투: ${speechMap[speechVal] || '반말'}
-3. 톤앤매너: ${toneMap[toneVal] || '담백한 톤'}
-4. 분량: ${lengthMap[lengthVal] || '보통 분량'}
-5. 추가 내용: ${rawPrompt ? rawPrompt : '없음'}
-
-[작성 규칙]
-- 말투(존댓말/반말)를 엄격히 지키세요.
-- 인사말이나 AI 안내문 없이 축하 메시지 본문만 출력하세요.`;
+위 조건을 반드시 엄격히 지켜 감각적인 한국어 생일 축하 메시지를 작성해 주세요.`;
 
       try {
         const resp = await fetch(GEMINI_API_PROXY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ mode: 'message', prompt,tone: toneVal })
         });
 
-        const text = await resp.text();
-        let json = {};
-        try { json = JSON.parse(text); } catch { throw new Error(`응답 파싱 실패`); }
+        const data = await resp.json();
+        if (!resp.ok || !data.text) throw new Error(data.error || 'AI 응답 없음');
 
-        if (!resp.ok) { throw new Error(json?.error || `서버 오류 (${resp.status})`); }
-
-        const aiText = json?.text || json?.raw?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-        if (aiText) {
-          generatedMsgEl.innerText = aiText.trim();
-        } else {
-          let dynamicClean = rawPrompt.replace(/(?:하라고|라고)\s*(?:해줘|해\s*주라|해)\s*$/g, " 화이팅이야!").replace(/(?:해줘|해)\s*$/g, "!");
-          if (speechVal === 'jondat') {
-            generatedMsgEl.innerText = `🎉 생일 진심으로 축하드려요! 🎂\n${dynamicClean ? dynamicClean : '오늘 맛있는 거 많이 드시고 행복한 하루 보내세요!'}`;
-          } else {
-            generatedMsgEl.innerText = `🎉 생일 축하해! 🎂\n${dynamicClean ? dynamicClean : '오늘 맛있는 거 많이 먹고 기분 좋은 하루 보내!'}`;
-          }
-        }
-      } catch (error) {
+        generatedMsgEl.innerText = data.text.trim();
+      } catch (err) {
+        console.warn("AI 멘트 생성 실패, 로컬 폴백 사용:", err);
         let dynamicClean = rawPrompt.replace(/(?:하라고|라고)\s*(?:해줘|해\s*주라|해)\s*$/g, " 화이팅이야!").replace(/(?:해줘|해)\s*$/g, "!");
         if (speechVal === 'jondat') {
-          generatedMsgEl.innerText = `🎉 생일 진심으로 축하드려요! 🎂\n${dynamicClean ? dynamicClean : '오늘 맛있는 거 많이 드시고 행복한 하루 보내세요!'}`;
+          generatedMsgEl.innerText = `생일 진심으로 축하드립니다! 오늘 하루 따뜻하고 행복하게 보내세요.\n${dynamicClean ? dynamicClean : ''}`;
         } else {
-          generatedMsgEl.innerText = `🎉 생일 축하해! 🎂\n${dynamicClean ? dynamicClean : '오늘 맛있는 거 많이 먹고 기분 좋은 하루 보내!'}`;
+          generatedMsgEl.innerText = `생일 축하해! 오늘 맛있는 거 잔뜩 먹고 기분 좋은 하루 보내!\n${dynamicClean ? dynamicClean : ''}`;
         }
       } finally {
         loadingBox.classList.add('hidden');
