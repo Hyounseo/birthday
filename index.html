@@ -26,6 +26,19 @@
       background-color: #f86075 !important;
       color: white !important;
     }
+    #lock-screen {
+      z-index: 60;
+    }
+    #lock-screen.is-hidden {
+      pointer-events: none;
+    }
+    #lock-screen:not(.is-hidden) {
+      pointer-events: auto;
+    }
+    header, main {
+      position: relative;
+      z-index: 1;
+    }
     @keyframes subtleGlow {
       0%, 100% { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
       50% { box-shadow: 0 12px 30px 2px rgba(248, 96, 117, 0.3); }
@@ -564,18 +577,34 @@
 
     function setStep(stepNum) {
       currentStep = stepNum;
+      const lockScreen = document.getElementById('lock-screen');
+      const appMain = document.querySelector('main');
+      const appHeader = document.querySelector('header');
+
       for (let i = 1; i <= 4; i++) {
         const card = document.getElementById(`step-card-${i}`);
-        if (i === stepNum) card.classList.add('step-active');
-        else card.classList.remove('step-active');
+        if (card) {
+          if (i === stepNum) card.classList.add('step-active');
+          else card.classList.remove('step-active');
+        }
       }
 
       if (stepNum === 1) {
-        document.getElementById('lock-screen').classList.remove('opacity-0', 'pointer-events-none');
+        lockScreen.classList.remove('opacity-0', 'pointer-events-none', 'is-hidden');
+        lockScreen.classList.add('is-visible');
+        lockScreen.style.zIndex = '60';
+        lockScreen.style.pointerEvents = 'auto';
+        if (appMain) appMain.style.pointerEvents = 'none';
+        if (appHeader) appHeader.style.pointerEvents = 'none';
         document.getElementById('msg-result').classList.add('hidden');
         document.getElementById('generated-msg').innerText = '';
       } else {
-        document.getElementById('lock-screen').classList.add('opacity-0', 'pointer-events-none');
+        lockScreen.classList.add('opacity-0', 'pointer-events-none', 'is-hidden');
+        lockScreen.classList.remove('is-visible');
+        lockScreen.style.zIndex = '0';
+        lockScreen.style.pointerEvents = 'none';
+        if (appMain) appMain.style.pointerEvents = 'auto';
+        if (appHeader) appHeader.style.pointerEvents = 'auto';
         if (stepNum === 2) { switchTab('dday', 2); }
         else if (stepNum === 3) {
           switchTab('gift', 3);
@@ -592,6 +621,8 @@
     }
 
     function unlockApp() { setStep(2); }
+    window.unlockApp = unlockApp;
+    window.setStep = setStep;
 
     function resetDemo() {
       document.getElementById('msg-result').classList.add('hidden');
@@ -1024,10 +1055,11 @@ ${cleanCoreMsg ? `- 상대방에게 꼭 전하고 싶은 축하/응원 내용: "
         const data = await resp.json();
         if (!resp.ok || !data.text) throw new Error(data.error || 'AI 응답 없음');
 
-        // 한자/외국어만 걸러내고 한글+이모지 유지
+        // 한자/외국어만 걸러내고 한글 문장으로 정리
         const cleanText = data.text
-          .replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u0900-\u097F]/g, ' ')
-          .replace(/[^\uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\s.,!?~:;()\[\]\-\'\"\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ')
+          .replace(/[一-龥ぁ-ゖァ-ヶ]/g, ' ')
+          .replace(/[A-Za-z]/g, ' ')
+          .replace(/[^\uAC00-\uD7A3\s.,!?~:;()\[\]\-'\"]/g, ' ')
           .replace(/\s{2,}/g, ' ')
           .trim();
 
@@ -1053,6 +1085,7 @@ ${cleanCoreMsg ? `- 상대방에게 꼭 전하고 싶은 축하/응원 내용: "
       showToast('축하 멘트가 복사되었습니다! ✨');
     }
 
+    setStep(1);
     renderBirthdays();
   </script>
 </body>

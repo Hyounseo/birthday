@@ -34,13 +34,13 @@ exports.handler = async (event) => {
     return cleaned;
   }
 
-  // 🔒 한자/외국어/외계어만 제거하고 한글+이모지+문장부호는 보존
+  // 🔒 한자/외국어만 제거하고 한글 문장만 보존
   function normalizeKoreanOnly(text) {
     if (!text) return '';
     return text
-      .replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, ' ') // 한자/일본어 제거
-      .replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u0900-\u097F]/g, ' ') // 아랍어/힌디어 제거
-      .replace(/[^\uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\s.,!?~:;()\[\]\-\'\"\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ')
+      .replace(/[一-龥ぁ-ゖァ-ヶ]/g, ' ') // 한자/일본어 제거
+      .replace(/[A-Za-z]/g, ' ') // 영어 제거
+      .replace(/[^\uAC00-\uD7A3\s.,!?~:;()\[\]\-'\"]/g, ' ')
       .replace(/\s{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
