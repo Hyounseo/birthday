@@ -976,9 +976,9 @@
       loadingBox.classList.remove('hidden');
 
       const relMap = {
-        friend: "친구 👭 (편하고 허물없는 다정한 사이)",
-        family: "가족 👨‍👩‍👧‍👦 (소중하고 따뜻한 사이)",
-        senior: "선배 / 직장동료 👔 (예의 바르고 격식 있는 사이)"
+        friend: "친구 (편하고 허물없는 다정한 사이)",
+        family: "가족 (소중하고 따뜻한 사이)",
+        senior: "선배 / 직장동료 (예의 바르고 격식 있는 사이)"
       };
 
       const speechMap = {
@@ -988,7 +988,7 @@
 
       const toneMap = {
         plain: "담백하게 (이모티콘 전혀 쓰지 말 것)",
-        cute: "귀엽고 애교 있게 (이모티콘 적극 사용)",
+        cute: "귀엽고 애교 있게 (이모티콘 1~2개 적극 활용)",
         funny: "재치 있고 유쾌하게",
         touching: "진중하고 감동적으로 (이모티콘 최대 1개)"
       };
@@ -996,37 +996,49 @@
       const lengthMap = {
         short: "1~2문장으로 아주 간결하게",
         medium: "2~3문장의 적당한 길이로",
-        long: "3~5문장으로 길고 정성스럽게"
+        long: "3~4문장으로 정성스럽게"
       };
+
+      // '~해줘/전해줘' 꼬리표 정제
+      let cleanCoreMsg = rawPrompt
+        .replace(/(?:라고|이라고)\s*(?:전해줘|말해줘|해줘|써줘|부탁해|해)\s*$/g, '')
+        .replace(/(?:전해줘|말해줘|해줘|써줘|부탁해)\s*$/g, '')
+        .trim();
 
       const prompt = `[생일 축하 메시지 작성 요청]
 - 관계: ${relMap[relVal] || '친구'}
 - 말투: ${speechMap[speechVal] || '반말'}
 - 톤앤매너: ${toneMap[toneVal] || '담백하게'}
 - 분량: ${lengthMap[lengthVal] || '보통 분량'}
-${rawPrompt ? `- 참고 키워드 및 추가 요청사항: ${rawPrompt}
-  (※ 주의: 위 요청사항은 AI를 향한 지시문입니다. '첫 직장 화이팅 하라고 해줘' 같은 지시문 어투를 그대로 복붙하지 말고, '첫 직장 생활도 완전 파이팅이야!' 처럼 메시지를 받는 사람의 상황을 자연스럽게 축하하고 응원하는 문장으로 주어를 변환해서 녹여내세요.)` : ''}
+${cleanCoreMsg ? `- 상대방에게 꼭 전하고 싶은 축하/응원 내용: "${cleanCoreMsg}" (※ 주의: 내가 상대방에게 이 내용을 응원하고 축하해 주는 것입니다. 상대방이 나에게 해준 것으로 주어를 바꾸지 마세요.)` : ''}
 
-위 조건을 반드시 엄격히 지켜 감각적인 한국어 생일 축하 메시지를 작성해 주세요.`;
+위 조건을 엄격히 준수하여 카카오톡으로 바로 보낼 수 있는 자연스러운 완성문 1개만 단답형으로 작성하세요. 한자나 외국어는 절대 쓰지 마세요.`;
 
       try {
         const resp = await fetch(GEMINI_API_PROXY, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'message', prompt,tone: toneVal })
+          body: JSON.stringify({ mode: 'message', prompt, tone: toneVal })
         });
 
         const data = await resp.json();
         if (!resp.ok || !data.text) throw new Error(data.error || 'AI 응답 없음');
 
-        generatedMsgEl.innerText = data.text.trim();
+        // 한자/외국어만 걸러내고 한글+이모지 유지
+        const cleanText = data.text
+          .replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u0900-\u097F]/g, ' ')
+          .replace(/[^\uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\s.,!?~:;()\[\]\-\'\"\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+
+        generatedMsgEl.innerText = cleanText || '생일 진심으로 축하해! 오늘 하루 최고로 행복하게 보내!';
       } catch (err) {
         console.warn("AI 멘트 생성 실패, 로컬 폴백 사용:", err);
-        let dynamicClean = rawPrompt.replace(/(?:하라고|라고)\s*(?:해줘|해\s*주라|해)\s*$/g, " 화이팅이야!").replace(/(?:해줘|해)\s*$/g, "!");
+        const cheerText = cleanCoreMsg ? `${cleanCoreMsg}! ` : '';
         if (speechVal === 'jondat') {
-          generatedMsgEl.innerText = `생일 진심으로 축하드립니다! 오늘 하루 따뜻하고 행복하게 보내세요.\n${dynamicClean ? dynamicClean : ''}`;
+          generatedMsgEl.innerText = `생일 진심으로 축하드립니다! ${cheerText}오늘 하루 행복 가득한 시간 보내세요.`;
         } else {
-          generatedMsgEl.innerText = `생일 축하해! 오늘 맛있는 거 잔뜩 먹고 기분 좋은 하루 보내!\n${dynamicClean ? dynamicClean : ''}`;
+          generatedMsgEl.innerText = `생일 축하해! ${cheerText}오늘 하루 맛있는 거 많이 먹고 제일 행복한 날 보내!`;
         }
       } finally {
         loadingBox.classList.add('hidden');

@@ -13,14 +13,14 @@ exports.handler = async (event) => {
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch { body = {}; }
 
-  const mode = body.mode || 'message'; // 'gift' 또는 'message'
+  const mode = body.mode || 'message';
   let userPrompt = body.prompt || '';
   const candidates = body.candidates || [];
   const tone = body.tone || 'plain';
   const API_KEY = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : null;
 
   // 🔒 톤별 이모지 상한선 강제 제어
-  const EMOJI_LIMIT = { plain: 0, cute: 2, funny: 2, touching: 1 };
+  const EMOJI_LIMIT = { plain: 0, cute:3, funny: 4, touching: 1 };
 
   function enforceEmojiLimit(text, limit) {
     if (!text) return text;
@@ -34,6 +34,18 @@ exports.handler = async (event) => {
     return cleaned;
   }
 
+  // 🔒 한자/외국어/외계어만 제거하고 한글+이모지+문장부호는 보존
+  function normalizeKoreanOnly(text) {
+    if (!text) return '';
+    return text
+      .replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, ' ') // 한자/일본어 제거
+      .replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\u0900-\u097F]/g, ' ') // 아랍어/힌디어 제거
+      .replace(/[^\uAC00-\uD7A3\u3131-\u318Ea-zA-Z0-9\s.,!?~:;()\[\]\-\'\"\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   if (!API_KEY) {
     return {
       statusCode: 500,
@@ -42,30 +54,22 @@ exports.handler = async (event) => {
     };
   }
 
-  // 🎁 선물 추천 전용 시스템 지침
   const GIFT_SYSTEM = `당신은 대한민국 전 연령대 맞춤 생일 선물 큐레이터 AI입니다.
 반드시 제공된 [후보 상품 목록] 중에서만 골라야 합니다.
 [절대 규칙]
-1. name, price, icon은 후보 목록에 있는 값을 절대 바꾸지 말고 그대로 사용하세요. 후보 목록에 없는 상품을 만들어내는 것은 엄격히 금지됩니다.
+1. name, price, icon은 후보 목록에 있는 값을 절대 바꾸지 말고 그대로 사용하세요.
 2. 반드시 후보 목록에 있는 상품 중에서만 3개를 선택하세요.
 3. desc(추천 이유)만 받는 분의 상황에 맞게 센스 있고 매력적인 한 줄로 새로 작성하세요.
 4. 부가 설명 없이 반드시 순수 JSON 배열 포맷만 출력하세요:
-[{"name":"후보 목록의 상품명 그대로","price":후보 목록의 가격 그대로,"icon":"후보 목록의 아이콘 그대로","desc":"추천 이유"}]`;
+[{"name":"상품명 그대로","price":가격 그대로,"icon":"아이콘 그대로","desc":"추천 이유"}]`;
 
-  // 💌 축하 멘트 전용 시스템 지침
   const MESSAGE_SYSTEM = `당신은 센스 있는 한국어 생일 축하 메시지 작가입니다.
 
-[절대 금지사항]
-- "당신의 특별한 날", "기도합니다", "화려한 길" 같은 어색한 번역투 표현 절대 금지.
-- 사용자의 지시문이나 키워드를 따옴표 없이 어색하게 통째로 복사해서 넣지 말고 문맥에 자연스럽게 녹여낼 것.
-- '담백하게' 톤일 때는 이모티콘을 절대 하나도 쓰지 마세요.
-- '진중하게' 톤일 때는 이모티콘을 최대 1개까지만 쓰세요.
-- '귀엽게' 톤일 때는 이모티콘을 2개 이내로 쓰세요.
-- '유쾌하게' 톤일 때는 이모티콘을 1~2개 이내로 쓰세요.
-- 지정된 분량(문장 수)을 반드시 지키세요. 짧게 요청받았는데 길게 쓰거나, 길게 요청받았는데 짧게 쓰지 마세요.
-- 한자, 일본어, 외국어 사용 금지.
-
-사용자가 요청한 관계, 말투, 톤앤매너, 분량 조건을 엄격히 준수하여 자연스러운 카카오톡 완성문만 단답형으로 출력하세요.`;
+[절대 규칙]
+1. 한자(漢字), 일본어, 힌디어, 아랍어 등 외국어는 절대 사용하지 마세요.
+2. [전달자: 나 / 수신자: 상대방] 관계입니다. 사용자가 입력한 요청사항은 '내가 상대방에게 건네는 응원/축하 말'입니다. "상대방이 나에게 해줘서 고맙다"는 식으로 주어와 목적어를 절대 반대로 바꾸지 마세요.
+3. 사용자가 '~해줘', '~라고 해줘'라고 입력하면, 그 내용을 내가 상대방에게 직접 건네는 다정한 응원의 문장으로 자연스럽게 전환하세요.
+4. 요청받은 관계, 말투(반말/존댓말), 톤앤매너, 분량을 엄격히 준수하여 카카오톡으로 바로 보낼 수 있는 완성문만 단답형으로 출력하세요.`;
 
   const SYSTEM_INSTRUCTION = mode === 'gift' ? GIFT_SYSTEM : MESSAGE_SYSTEM;
 
@@ -104,6 +108,7 @@ exports.handler = async (event) => {
     let text = data?.choices?.[0]?.message?.content || null;
     if (text && mode === 'message') {
       text = text.replace(/^["']|["']$/g, '').trim();
+      text = normalizeKoreanOnly(text);
       const limit = EMOJI_LIMIT[tone] !== undefined ? EMOJI_LIMIT[tone] : 2;
       text = enforceEmojiLimit(text, limit);
     }
